@@ -88,6 +88,11 @@ const addUsersToAGroup = async (groupId, userIds) => {
           version: groupVersion,
         });
       },
+
+      /* We are doing a retry here not so much because we are afraid of rate-limiting, but because the groups api
+         exposes a version field.  If we get an error we are going to assume it is a versioning error and re-read the 
+         group version and try to resubmit the error.
+      */
       {delay: 200, factor: 2, maxAttempts: 5}
     );
   } catch (e) {

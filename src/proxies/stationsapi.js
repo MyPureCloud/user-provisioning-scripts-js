@@ -15,11 +15,6 @@ const getStationByWebRtcUserId = async (userId) => {
   let apiInstance = new platformClient.StationsApi();
 
   try {
-    /*
-      Why the retry logic here.  When we create a web rtc phone, we index the created station in our search engine.
-      When we lookup a station by name, the search engine can be behind in index the record so we retry several times until
-      we find the station or give up.
-    */
     const results = await retry(
       async (context) => {
         const stations = await apiInstance.getStations(opts);
@@ -32,6 +27,11 @@ const getStationByWebRtcUserId = async (userId) => {
 
         return stations;
       },
+      /*
+      Why the retry logic here.  When we create a web rtc phone, we index the created station in our search engine.
+      When we lookup a station by name, the search engine can be behind in index the record so we retry several times until
+      we find the station or give up.  In this case we wait a second between calls and give up after 6 times.
+    */
       {delay: 1000, factor: 1, maxAttempts: 6}
     );
 

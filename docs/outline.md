@@ -16,7 +16,7 @@ This is the prelimary outline for the fullblown tutorial. This outline will even
    NPM install
    Docker install
 
-## Module 1: How the script runs and authenticates the user
+## Module 1: Running the script and authenticating the users
 
 1. Use an OAuth client id
 2. Token returned is only good for the time on the clinet. If you were to write some kind
@@ -24,7 +24,7 @@ This is the prelimary outline for the fullblown tutorial. This outline will even
 3. Oauth client is limited to 300 calls a minute
 4. Don't split the client ids to get around this limitation
 
-## Module 2: Creating the users
+## Module 2: Creating users
 
 1.  Looking up sites, groups and roles
 
@@ -33,7 +33,7 @@ This is the prelimary outline for the fullblown tutorial. This outline will even
 - Call out that emails will be sent to user and users will be forced to change their password before they can actually do anything
 - Call out around deleting users
 
-## Module 3: Assign the users to groups and roles
+## Module 3: Assigning users to groups and roles
 
 1. Assigning the users to a group
 
@@ -44,11 +44,10 @@ This is the prelimary outline for the fullblown tutorial. This outline will even
   - Our groups API expects users to be submitted in a batch.
   - Submitting one user at a time can run into problems with per minute rate limits
   - Submitting one user at a time can into problems with our fair usage APIs.
-  - We use re
 
 2.  Assigning the user to a role. (Why do we need a role? Roles control permissions and we are using the communicare role to)
 
-## Module 4: Create WebRTC Phones
+## Module 4: Creating WebRTC Phones
 
 1.  What is the relationship between phone bases -> phones and stations
 2.  What is the relationship between sites -> phones <- users.
