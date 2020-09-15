@@ -71,9 +71,9 @@ const getGroupByName = async (groupName) => {
 };
 
 /*
-   Adds a user to a group.  Note, I am using retry logic on this call because we can have multiple users (remember we are asynchronous)
+   Adds a user to a group.  Note: I am using retry logic on this call because we can have multiple users (remember we are asynchronous)
    and GenesysCloud uses an optimistic lock scheme to protect from multiple threads updating the same record at the same time.  
-   So, if we get any kind of error on our cassl, we will retry 4 times with an expotential back off on the calls
+   So, if we get any kind of error on our calls, we will retry 5 times with an expotential back off on the calls
 */
 const addUsersToAGroup = async (groupId, userIds) => {
   let apiInstance = new platformClient.GroupsApi();
@@ -88,7 +88,7 @@ const addUsersToAGroup = async (groupId, userIds) => {
           version: groupVersion,
         });
       },
-      {delay: 200, factor: 2, maxAttempts: 5} //Need to log errors on retry
+      {delay: 200, factor: 2, maxAttempts: 5}
     );
   } catch (e) {
     console.log(

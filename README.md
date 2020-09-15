@@ -12,7 +12,7 @@ Welcome to the user-provisioning-scripts-js repo. This repo contains a node.js-b
 All code was run using node version 14.3.0. The code should work with Node 11 and above. To run the code you need to first:
 
 1. Ensure that node 11 are higher is running on your server.
-2. Run npm i to install all of the pacakges and dependencies.
+2. Run `npm i` to install all of the pacakges and dependencies.
 3. Setup a OAuth Client Credential grant in your OAUTH instance. For purposes of this tutorial, the OAuth Client was configured with the Communicate Admin and Telephony Admin roles.
 
 4. Set the following environment variables:
@@ -22,13 +22,16 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
 
    **Note**: You can also set the above environment variables in .env file.
 
-5. To run the test cases, you can run: npm run test
-6. To run the actual code, you can change to the src directory and run: node index.js ../data/userdata.csv
+5. To run the test cases, you can run: `npm run test`
+6. To run the actual code, you can change to the src directory and run: `node index.js ../data/userdata.csv`
 
    **Note**: This code will create the users against your organization, assign them to a group and a role so please be aware of this and be careful. This code is a tutorial for how to provision users. It has mininmal error handling and no rollback logic if something goes wrong.
 
 ## Code Organization
 
+All of the code for this project is logged under the src tree. All unit tests are located under the test directory.
+
+```
     data/                   <= Contains a single csv file mapping out the user fields to map
     docs/                   <= The tutorial documents that will be rendered on our developer center.
     src/
@@ -40,3 +43,4 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
     tests/
       unit/                 <= All of our test cases we use to test our application.  All
                                our unit tests are written using the Jest framework.
+```

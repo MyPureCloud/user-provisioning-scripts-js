@@ -32,7 +32,7 @@ const getStationByWebRtcUserId = async (userId) => {
 
         return stations;
       },
-      {delay: 1000, factor: 1, maxAttempts: 6} //Need to log errors on retry
+      {delay: 1000, factor: 1, maxAttempts: 6}
     );
 
     const station = {
