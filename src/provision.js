@@ -62,7 +62,7 @@ const assignUsersToRoles = async (users) => {
   it will call create the user.  After each CREATE API is called, it will push a promise into the
   the resultsPromise array.  Then, once the file is completely process, the code will WAIT for all promises to resolve.
 */
-async function createUsers(filename) {
+const createUsers = async (filename) => {
   let resultPromises = [];
 
   console.log('Beginning user creation');
@@ -103,8 +103,46 @@ async function createUsers(filename) {
         await stationsApiProxy.assignUserToWebRtcPhone(user.userId);
       });
     });
-}
+};
+
+const createUsersService = async (userRequest) => {
+  const user = {
+    NAME: userRequest.name,
+    EMAIL: userRequest.email,
+    PASSWORD: userRequest.password,
+    GROUP: userRequest.group,
+    ROLE: userRequest.role,
+    SITENAME: userRequest.sitename,
+    PHONEBASE: userRequest.phonebase,
+  };
+
+  try {
+    console.log(`Creating a user`);
+    const userResults = await usersApiProxy.createUser(user);
+    user.userId = userResults.id;
+    user.groupId = (await groupsApiProxy.getGroupByName(user.GROUP)).id;
+    user.site = await sitesApiProxy.getSiteByName(user.SITENAME);
+    user.roleId = (await rolesApiProxy.getRoleByName(user.ROLE)).id;
+    user.phoneBase = await phoneBaseApiProxy.getPhoneBaseByName(user.PHONEBASE);
+
+    const users = [user];
+    console.log(`Assigning users to groups`);
+    await assignUsersToGroups(users);
+
+    console.log(`Assigning users to roles`);
+    await assignUsersToRoles(users);
+
+    console.log(`Creating phones for users`);
+    users.map(async (userRecord) => {
+      await phoneApiProxy.createWebRTCPhone(userRecord);
+      await stationsApiProxy.assignUserToWebRtcPhone(userRecord.userId);
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
 
 exports.createUsers = createUsers;
+exports.createUsersService = createUsersService;
 exports.assignUsersToGroups = assignUsersToGroups;
 exports.assignUsersToRoles = assignUsersToRoles;

@@ -18,7 +18,6 @@ const getStationByWebRtcUserId = async (userId) => {
     const results = await retry(
       async (context) => {
         const stations = await apiInstance.getStations(opts);
-        console.log(`stations: ${JSON.stringify(stations, null, '\t')}`);
         /*If we cant find a station then throw an exception.  This will trigger a retry*/
         if (stations.entities.length === 0) {
           console.log(`No station found retrying`);

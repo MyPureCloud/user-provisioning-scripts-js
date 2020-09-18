@@ -56,11 +56,6 @@ const getRoleIds = () => {
   return [...roleIds];
 };
 
-/*
-   Adds a user to a role.  Note, I am using retry logic on this call because we can have multiple users (remember we are asynchronous)
-   and GenesysCloud uses an optimistic lock scheme to protect from multiple threads updating the same record at the same time.  
-   So, if we get any kind of error on our calls, we will retry 5 times with an expotential back off on the calls
-*/
 const addUsersToARole = async (roleId, userIds) => {
   let apiInstance = new platformClient.AuthorizationApi();
 
@@ -69,7 +64,7 @@ const addUsersToARole = async (roleId, userIds) => {
       async (context) => {
         await apiInstance.putAuthorizationRoleUsersAdd(roleId, userIds);
       },
-      {delay: 200, factor: 2, maxAttempts: 5} //Need to log errors on retry
+      {delay: 200, factor: 2, maxAttempts: 5}
     );
   } catch (e) {
     console.log(

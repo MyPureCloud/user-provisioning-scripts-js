@@ -8,8 +8,11 @@ const authenticate = async (clientId, clientSecret) => {
   const client = platformClient.ApiClient.instance;
 
   try {
-    authData = await client.loginClientCredentialsGrant(clientId, clientSecret);
-    return authData.accessToken;
+    const authData = await client.loginClientCredentialsGrant(
+      clientId,
+      clientSecret
+    );
+    return authData;
   } catch (e) {
     console.log(`Authentication error has occurred -> ${e}`);
     process.exit();

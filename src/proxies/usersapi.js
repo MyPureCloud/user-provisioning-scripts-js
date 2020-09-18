@@ -1,6 +1,6 @@
 const platformClient = require('purecloud-platform-client-v2');
 
-async function createUser(userInfo) {
+const createUser = async (userInfo) => {
   apiInstance = new platformClient.UsersApi();
 
   const user = {
@@ -21,6 +21,6 @@ async function createUser(userInfo) {
 
     return null;
   }
-}
+};
 
 exports.createUser = createUser;
