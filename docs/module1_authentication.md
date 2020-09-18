@@ -143,15 +143,19 @@ At this point, the user-provisioning script is now authenticated and can begin t
 
 # OAuth Client and Token Best Practices
 
-Before we wrap up this module, we do need spend some time thinking about how you set up and use OAuth clients in your scripts. New developers usually just setup a single OAuth client with a large number of privileges and they are off writing code. However, you need to think about your OAuth client configuration and setup from a operational perspective.
+Before we wrap up this module, we do need spend some time thinking about how to set up and use OAuth clients. New developers usually just setup a single OAuth client with a large number of privileges and they are off writing code. They reuse the same OAuth client across all of their integrations and do not clearly separate real-time integrations with batch job integrations. This can be problematic as lets say one of your batch scripts begins getting rate-limited or acting in abusive manner towards a Genesys Cloud service or resource.
+
+A Genesys Cloud on-call support engineer will have to evaluate the risk your OAuth client is causing to the overall platform health and may decide as part of their playbooks to revoke the misbehaving OAuth Clients credentials until the issue can be resolved. If multiple integrations share the same OAuth client, this can take down your entire Call Center. So this is why it is critical to think through how you are going to structure your OAuth Clients. Here are some general guidelines:
+
+However, you need to think about your OAuth client configuration and setup from a operational perspective.
 Specifically, how you setup and segerate your OAuth clients to represent specific types of work being done
 
-1.  You are responsible for your token expiration. Understand how long your services last and if your token expires, you have to handle it.
-2.  Thinking carefully about setting up your OAuth Client:
-
-- Separate your batch job clients from your real-time jobs. We have had situations in the best where a poorly behaving script needed to have their OAuth credentials revoked and without the right level of granularity we can end up impacting business critical, real-time functions.
-- Grant your OAuth clients only the security privileges they need to carry out their job. Too broad of a token and you open your org up to abuse. While tokens, expire a hijacked token with too wide of security privilege can be a problem
-- OAuth Clients have a rate limit of 300 requests per minute. Side stepping your rate limits can still cause your OAuth clients to be rate-limited
+1. **Do not group batch integrations and real-time integrations under the same OAuth client**. Often times batch jobs will be the thing that can either create a rate-limiting situation or unearth a performance problem in Genesys Cloud.
+2. **For new scripts or services, consider setting up an a separate OAuth client for them so that they can easily be shutdown without impacting existing operations.** Personally, I recommend setting a separate OAuth client for each integration or service you provide.
+3. **Provide a clear, descriptive name and description for your OAuth client**. In the event there is an incident with a script using your token, the Genesys Cloud on-call support engineers will look at your OAuth client's name and description to help ascertain the risks of shutting down the client.
+4. **Do not over-privilege your OAuth client**. While an OAuth token will expire, if the OAuth token is hijacked or compromised, and the OAuth client that issues the token has more privileges then it needs, this will cause an unnecessary risk to your Genesys Cloud account and the data in it.
+5. **Be aggressive with your token time-outs**. While you can set your tokens to timeout for up to 24 hours, this can increase the surface an attacker has to (ab)use a token before it expires.
+6. **Do not setup the multiple OAuth Clients to sidestep Genesys Cloud rate-limits**. OAuth Clients have a rate limit of 300 requests per minute. [4] Do not attempt to setup multiple OAuth Clients that your application uses to side step. This is considered abusive behavior and may result in all of your OAuth Clients credentials revoked.
 
 # Summary
 
@@ -160,3 +164,4 @@ Specifically, how you setup and segerate your OAuth clients to represent specifi
 1. [OAuth 2 Overview](https://developer.mypurecloud.com/api/rest/authorization/index.html#access_tokens)
 2. [Developer Center API Guide](https://developer.mypurecloud.com/api/rest/v2/)
 3. [API Explorer](https://developer.mypurecloud.com/developer-tools/#/api-explorer)
+4. [API Rate Limits](https://developer.mypurecloud.com/api/rest/tips/#api_rate_limiting)
