@@ -1,24 +1,24 @@
 # Overview
 
-This module will cover how to authenticate the user-provisioning script with Genesys Cloud using the JavaScript API.
+This module will cover how to authenticate the user-provisioning script with Genesys Cloud using the Genesys Cloud JavaScript API. [1]
 
-In terms of the overall architecture, the diagram below will show the specific spot in the process we will be working in for this module:
+In terms of the overall architecture, the diagram below will show the specific place in the user provisioning process we will be working in for this module:
 
 ![User Provisioning Module 1 diagram]("resources/images/user_provisioning_auth_module1.png")
 
 ## Authenticating with the Genesys Cloud
 
-Genesys Cloud uses the OAuth2 2.0 specification [1] to handle all authentication requests coming from a third-party applications or services. For the user provisioning script, we will be using an OAuth 2.0 client (credential grant). The OAuth credential grant is the appropriate form of authentication to use when using an application, script or service needs to communicate with Genesys Cloud. The diagram below illustrates how an OAuth 2.0 client credential grant occurs within Genesys Cloud.
+Genesys Cloud uses the OAuth2 2.0 specification [2] to handle all authentication requests coming from a third-party application or services. For the user provisioning script, we will be using an OAuth 2.0 client credential grant. The OAuth 2.0 credential grant is the appropriate form of authentication to use when using an application, script or service needs to communicate with Genesys Cloud as non-user. Typically credential grants are used when building integrations from a third-party application or service to Genesys Cloud. The diagram below illustrates how an OAuth 2.0 client credential grant occurs between a service and Genesys Cloud.
 
 ![User Provisioning Module 1 diagram]("resources/images/user_provisioning_outh_client_credential_grant_module.png")
 
-You can see that using an OAuth credential grant requires 5 steps:
+You can see from the diagram above, that using an OAuth 2.0 credential grant requires 5 steps:
 
-1. With an OAuth 2.0 client credential grant, a Genesys Cloud administrato sets up an OAuth client in Genesys Cloud and then provides the developers script/service with the client id and client secret that is created at the time the OAuth client was configured. The configuring of the OAuth Client for an application or service is a one-time setup.
+1. With an OAuth 2.0 client credential grant, a Genesys Cloud administrator sets up an OAuth client in Genesys Cloud and provides the developer's script/service with the client id and client secret that is created at the time the OAuth client was configured. The configuring of the OAuth Client for an application or service is a one-time setup.
 
-2. The developer then configures the script (in our case the user-provisioning script), to have access to the client id and client secret. These values are usually accessed by the script via configuration file, environment variables or a secrets repository.
+2. The developer then configures the script (in our case the user-provisioning script), to have access to the client id and client secret. These values are usually accessed by the service via a configuration file, environment variables or a secrets repository.
 
-3. When the script (or service), needs to authenticate they present this client id and client secret to Genesys Cloud's OAuth service and if these two items are valid, Genesys Cloud will return an OAuth token that can then be presented with each request made to Genesys Cloud.
+3. When the service, needs to authenticate they present this client id and client secret to Genesys Cloud's OAuth service and if these two items are valid, Genesys Cloud will return an OAuth token that can then be presented with each request made to Genesys Cloud.
 
 **Note: Asking for a token does not happen with every call to Genesys Cloud**
 
@@ -26,7 +26,7 @@ You can see that using an OAuth credential grant requires 5 steps:
 
 5. If the OAuth token is valid (e.g. it has not expired or been tampered with), Genesys Cloud will let the request through to the targeted API. If the token is invalid, Genesys Cloud will return a 401 (Unauthorized) HTTP status code.
 
-**Call Out** An OAuth authentication token has a limited shelf life and will expire. It is the responsiblity of the applicaiton or script to be able re-authenticate when a token expires.
+**Call Out** An OAuth token has a limited shelf life and will expire. It is the responsiblity of the application or script to re-authenticate itself when a token expires.
 
 While this seems a lot of work, in practice if you use the Genesys Cloud SDKs, the process of authentication is extremely simple.
 
@@ -53,7 +53,7 @@ const filename = process.argv[2];
 })();
 ```
 
-For purposes of the user-provisioning scripts, we wrap all of the calls out to the Genesys Cloud API's in proxy classes that will perform the calls against the SDK. So to begin the authentication process we call the `authApiProxy.authenticate()` method:
+For purposes of the user-provisioning scripts, we wrap all of the calls out to the Genesys Cloud API's in their own files (under the ``proxies` directory) that will perform the calls against the SDK. To begin the authentication process we call the `authApiProxy.authenticate()` method:
 
 ```javascript
 const token = await authApiProxy.authenticate(
@@ -90,20 +90,21 @@ const authenticate = async (clientId, clientSecret) => {
 exports.authenticate = authenticate;
 ```
 
-There are three keys things to takeaway from the code above. First, in order to use the Genesys Cloud API (formerly known as PureCloud) we need to import the `purecloud-platform-client-v2' into our. This is done via the following code:
+There are three keys things to takeaway from the code above. First, in order to use the Genesys Cloud API (formerly known as PureCloud) we need to import the `purecloud-platform-client-v2' to make the Genesys Cloud functions available for use. This is done via the following code:
 
 ```javascript
 const platformClient = require('purecloud-platform-client-v2');
 ```
 
-This is done at the top of every js file that is going to use the API. Second, we need to retrieve an instance of the class in the Genesys Cloud Javascript SDK we are going to use. The Genesys Cloud API is grouped into classes based on their functionality and mirrors how the Genesys Cloud REST APIs are organized. You can see this organization of REST APIs in the Developer Center API documents[2] or via the Developer Tools API explorer [3].
-So, in the `authenticate()` method we need to retrieve an instance of the `ApiClient`.
+Second, we need to retrieve an instance of the class in the Genesys Cloud Javascript SDK we are going to use. The Genesys Cloud API is grouped into classes based on their functionality and mirrors how the Genesys Cloud REST APIs are organized. You can see this organization of REST APIs in the Developer Center API documents [3] or via the Developer Tools API explorer [4].
+
+In the `authenticate()` method we need to retrieve an instance of the `ApiClient`.
 
 ```javascript
 const client = platformClient.ApiClient.instance;
 ```
 
-Now with the client instance at hand, we can authenticate using `loginClientCredentialsGrant()` method on the client instance, passing the client id and secret.
+Now with the client instance at hand, we can authenticate using the `loginClientCredentialsGrant()` method on the `client` instance. We pass in the client id and secret.
 
 ```javascript
 const authData = await client.loginClientCredentialsGrant(
@@ -113,11 +114,11 @@ const authData = await client.loginClientCredentialsGrant(
 return authData;
 ```
 
-**Note:** The Genesys Cloud JavaScript SDK returns JavaScript `Promise` on all of its SDK calls. This means that when make a call against the API you must use either the `Promises.then().catch()` approach for processing the results of the call or you must an `async/await` approach.
+**Note:** The Genesys Cloud JavaScript SDK returns a JavaScript `Promise` on all of its SDK calls. This means that when you make a call against the API in the JavaScript SDK, you must either use the `Promises.then().catch()` approach for processing the results of the call or the `async/await` approach. The approach you chose is based on your personal preference.
 
-Most of the code in this developer starting guide will use the `async/await` approach. Once the authentication process has successfully completed, an token will be returned.
+Most of the code in this developer starting guide will use the `async/await` approach. Once the authentication process has successfully completed, the function will return an instance of the `AuthData`. The contents of the `AuthData` class will be cover later on in next section.
 
-At this point the Genesys Cloud Javascript SDK will cache the token and use it on every SDK call. You do not need to do any thing else with the token unless it expires. If a token expires, your SDK will need to re-authenticate using its client id and client secret.
+At this point the Genesys Cloud Javascript SDK will cache the return OAuth token and use it on every SDK call. You do not need to do anything else with the token unless it expires. If a token expires, your application will need to re-authenticate using its client id and client secret.
 
 ## OAuth Token Expiration
 
@@ -137,31 +138,38 @@ token: {
 }
 ```
 
-**NOTE TO REVIEW**: WHAT FORMAT IS tokenExpiryTime in (seconds, millisecndon, the value does not convert to anything meaningful. Wonder if we are dealing with an integer overflow issues)
+**NOTE TO REVIEW**: WHAT FORMAT IS tokenExpiryTime in (seconds, milliseconds, the value does not convert to anything meaningful. Wonder if we are dealing with an integer overflow issues)
 
 At this point, the user-provisioning script is now authenticated and can begin the process of creating users.
 
 # OAuth Client and Token Best Practices
 
-Before we wrap up this module, we do need spend some time thinking about how to set up and use OAuth clients. New developers usually just setup a single OAuth client with a large number of privileges and they are off writing code. They reuse the same OAuth client across all of their integrations and do not clearly separate real-time integrations with batch job integrations. This can be problematic as lets say one of your batch scripts begins getting rate-limited or acting in abusive manner towards a Genesys Cloud service or resource.
+Before we wrap up this module, we do need to spend some time thinking about how to set up and use OAuth clients. New developers usually just setup a single OAuth client with a admin permissions and they are off writing code. They reuse the same OAuth client across all of their integrations and do not clearly separate real-time integrations with batch job integrations. This can be problematic. For example, lets say one of your scripts begins getting rate-limited or acting in abusive manner towards a Genesys Cloud service or resource. If the script is getting rate limited, all applications using that OAuth client will be rate-limited.
 
-A Genesys Cloud on-call support engineer will have to evaluate the risk your OAuth client is causing to the overall platform health and may decide as part of their playbooks to revoke the misbehaving OAuth Clients credentials until the issue can be resolved. If multiple integrations share the same OAuth client, this can take down your entire Call Center. So this is why it is critical to think through how you are going to structure your OAuth Clients. Here are some general guidelines:
+If the script is acting abusively or causing a performance issue within Genesys Cloud, a Genesys Cloud on-call support engineer be paged and will have to evaluate the risk your OAuth client is causing to the overall platform health. As part of the their support playbooks the on-call engineer may have to revoke the misbehaving OAuth Clients credentials until the issue can be resolved. If multiple integrations share the same OAuth client, this can take down your entire Call Center. This is why it is critical to think through how you are going to structure your OAuth Clients. Here are some general guidelines:
 
-However, you need to think about your OAuth client configuration and setup from a operational perspective.
-Specifically, how you setup and segerate your OAuth clients to represent specific types of work being done
-
-1. **Do not group batch integrations and real-time integrations under the same OAuth client**. Often times batch jobs will be the thing that can either create a rate-limiting situation or unearth a performance problem in Genesys Cloud.
-2. **For new scripts or services, consider setting up an a separate OAuth client for them so that they can easily be shutdown without impacting existing operations.** Personally, I recommend setting a separate OAuth client for each integration or service you provide.
-3. **Provide a clear, descriptive name and description for your OAuth client**. In the event there is an incident with a script using your token, the Genesys Cloud on-call support engineers will look at your OAuth client's name and description to help ascertain the risks of shutting down the client.
+1. **Do not group batch integrations and real-time integrations under the same OAuth client**. Often times batch jobs will be the thing that can either create a rate-limiting situation or unearth a performance problem in Genesys Cloud. Different integrations have different uptime and performance characteristics so think carefully before using an OAuth client across these different types of integrtions.
+2. **For new scripts or services, consider setting up an a separate OAuth client for them so that they can easily be shutdown without impacting critical contact center functions.** Personally, I recommend setting a separate OAuth client for each integration or service you are building.
+3. **Provide a clear, descriptive name and description for your OAuth client**. In the event there is an incident with a script, the Genesys Cloud on-call support engineers will look at your OAuth client's name and description to help ascertain the risks of shutting down your client.
 4. **Do not over-privilege your OAuth client**. While an OAuth token will expire, if the OAuth token is hijacked or compromised, and the OAuth client that issues the token has more privileges then it needs, this will cause an unnecessary risk to your Genesys Cloud account and the data in it.
 5. **Be aggressive with your token time-outs**. While you can set your tokens to timeout for up to 24 hours, this can increase the surface an attacker has to (ab)use a token before it expires.
-6. **Do not setup the multiple OAuth Clients to sidestep Genesys Cloud rate-limits**. OAuth Clients have a rate limit of 300 requests per minute. [4] Do not attempt to setup multiple OAuth Clients that your application uses to side step. This is considered abusive behavior and may result in all of your OAuth Clients credentials revoked.
+6. **Do not setup multiple OAuth Clients to sidestep Genesys Cloud rate-limits**. OAuth Clients have a rate limit of 300 requests per minute. [5] Do not attempt to setup multiple OAuth Clients that your application uses to side step. This is considered abusive behavior and may result in all of your OAuth Clients credentials revoked.
 
 # Summary
 
+In this module we:
+
+1.  Learned how to authenticate a script or service with Genesys Cloud using OAuth2.
+2.  Walked through the Genesys Cloud Javascript SDK and used it to authenticate the user-provisioning script.
+3.  Reviewed how OAuth 2 tokens expiration and how to deal with an expired token.
+4.  Reviewed best practices related to how you setup your OAuth2 client level of responsibilities and permissions.
+
+In the next module, we will review how we will parse the CSV file containing the Genesys Cloud user information and then create a user based on this information.
+
 # References
 
-1. [OAuth 2 Overview](https://developer.mypurecloud.com/api/rest/authorization/index.html#access_tokens)
-2. [Developer Center API Guide](https://developer.mypurecloud.com/api/rest/v2/)
-3. [API Explorer](https://developer.mypurecloud.com/developer-tools/#/api-explorer)
-4. [API Rate Limits](https://developer.mypurecloud.com/api/rest/tips/#api_rate_limiting)
+1. [Genesys Cloud JavaScript API](https://developer.mypurecloud.com/api/rest/client-libraries/javascript/)
+2. [OAuth 2 Overview](https://developer.mypurecloud.com/api/rest/authorization/index.html#access_tokens)
+3. [Developer Center API Guide](https://developer.mypurecloud.com/api/rest/v2/)
+4. [API Explorer](https://developer.mypurecloud.com/developer-tools/#/api-explorer)
+5. [API Rate Limits](https://developer.mypurecloud.com/api/rest/tips/#api_rate_limiting)
