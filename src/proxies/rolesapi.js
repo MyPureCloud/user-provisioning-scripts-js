@@ -1,7 +1,7 @@
 const platformClient = require('purecloud-platform-client-v2');
 const retry = require('@lifeomic/attempt').retry;
 
-let rolesMap = new Map();
+let rolesMap = {};
 
 /*
     The getAuthorizationRoleByLogicalName() will look up a role based on its logical name from GenesysCloud from Genesys Cloud 

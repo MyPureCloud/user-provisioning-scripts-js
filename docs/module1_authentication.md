@@ -4,13 +4,13 @@ This module will cover how to authenticate the user-provisioning script with Gen
 
 In terms of the overall architecture, the diagram below will show the specific place in the user provisioning process we will be working in for this module:
 
-![User Provisioning Module 1 diagram]("resources/images/user_provisioning_auth_module1.png")
+![User Provisioning Module 1 diagram]("resources/images/mod_1_1_user_provisioning_arch_overview.png")
 
 ## Authenticating with the Genesys Cloud
 
 Genesys Cloud uses the OAuth2 2.0 specification [2] to handle all authentication requests coming from a third-party application or services. For the user provisioning script, we will be using an OAuth 2.0 client credential grant. The OAuth 2.0 credential grant is the appropriate form of authentication to use when using an application, script or service needs to communicate with Genesys Cloud as non-user. Typically credential grants are used when building integrations from a third-party application or service to Genesys Cloud. The diagram below illustrates how an OAuth 2.0 client credential grant occurs between a service and Genesys Cloud.
 
-![User Provisioning Module 1 diagram]("resources/images/user_provisioning_outh_client_credential_grant_module.png")
+![User Provisioning Module 1 diagram]("resources/images/mod_1_2_user_provisioning_oauth_client_credential_grant.png")
 
 You can see from the diagram above, that using an OAuth 2.0 credential grant requires 5 steps:
 
@@ -26,7 +26,7 @@ You can see from the diagram above, that using an OAuth 2.0 credential grant req
 
 5. If the OAuth token is valid (e.g. it has not expired or been tampered with), Genesys Cloud will let the request through to the targeted API. If the token is invalid, Genesys Cloud will return a 401 (Unauthorized) HTTP status code.
 
-**Call Out** An OAuth token has a limited shelf life and will expire. It is the responsiblity of the application or script to re-authenticate itself when a token expires.
+**Call Out** An OAuth token has a limited shelf life and will expire. It is the responsibility of the application or script to re-authenticate itself when a token expires.
 
 While this seems a lot of work, in practice if you use the Genesys Cloud SDKs, the process of authentication is extremely simple.
 
@@ -53,7 +53,7 @@ const filename = process.argv[2];
 })();
 ```
 
-For purposes of the user-provisioning scripts, we wrap all of the calls out to the Genesys Cloud API's in their own files (under the ``proxies` directory) that will perform the calls against the SDK. To begin the authentication process we call the `authApiProxy.authenticate()` method:
+For purposes of the user-provisioning scripts, we wrap all of the calls out to the Genesys Cloud API's in their own files (under the `proxies` directory) that will perform the calls against the SDK. To begin the authentication process we call the `authApiProxy.authenticate()` method:
 
 ```javascript
 const token = await authApiProxy.authenticate(
@@ -90,7 +90,7 @@ const authenticate = async (clientId, clientSecret) => {
 exports.authenticate = authenticate;
 ```
 
-There are three keys things to takeaway from the code above. First, in order to use the Genesys Cloud API (formerly known as PureCloud) we need to import the `purecloud-platform-client-v2' to make the Genesys Cloud functions available for use. This is done via the following code:
+There are three keys things to takeaway from the code above. First, in order to use the Genesys Cloud API (formerly known as PureCloud) we need to import the `purecloud-platform-client-v2` to make the Genesys Cloud functions available for use. This is done via the following code:
 
 ```javascript
 const platformClient = require('purecloud-platform-client-v2');
@@ -122,7 +122,7 @@ At this point the Genesys Cloud Javascript SDK will cache the return OAuth token
 
 ## OAuth Token Expiration
 
-When an OAuth is client is setup in Genesys Cloud, the admininstrator will configure how long (in seconds) the token will be valid for this specific OAuth client. When `loginClientCredentialsGrant()` is called you will retrieve an `AuthData` object containing the following information:
+When an OAuth is client is setup in Genesys Cloud, the administrator will configure how long (in seconds) the token will be valid for this specific OAuth client. When `loginClientCredentialsGrant()` is called you will retrieve an `AuthData` object containing the following information:
 
 1. **accessToken**: The OAuth token that will be presented on each SDK call.
 2. **tokenExpiryTime**: The number of seconds the token will expire
@@ -148,7 +148,7 @@ Before we wrap up this module, we do need to spend some time thinking about how 
 
 If the script is acting abusively or causing a performance issue within Genesys Cloud, a Genesys Cloud on-call support engineer be paged and will have to evaluate the risk your OAuth client is causing to the overall platform health. As part of the their support playbooks the on-call engineer may have to revoke the misbehaving OAuth Clients credentials until the issue can be resolved. If multiple integrations share the same OAuth client, this can take down your entire Call Center. This is why it is critical to think through how you are going to structure your OAuth Clients. Here are some general guidelines:
 
-1. **Do not group batch integrations and real-time integrations under the same OAuth client**. Often times batch jobs will be the thing that can either create a rate-limiting situation or unearth a performance problem in Genesys Cloud. Different integrations have different uptime and performance characteristics so think carefully before using an OAuth client across these different types of integrtions.
+1. **Do not group batch integrations and real-time integrations under the same OAuth client**. Often times batch jobs will be the thing that can either create a rate-limiting situation or unearth a performance problem in Genesys Cloud. Different integrations have different uptime and performance characteristics so think carefully before using an OAuth client across these different types of integrations.
 2. **For new scripts or services, consider setting up an a separate OAuth client for them so that they can easily be shutdown without impacting critical contact center functions.** Personally, I recommend setting a separate OAuth client for each integration or service you are building.
 3. **Provide a clear, descriptive name and description for your OAuth client**. In the event there is an incident with a script, the Genesys Cloud on-call support engineers will look at your OAuth client's name and description to help ascertain the risks of shutting down your client.
 4. **Do not over-privilege your OAuth client**. While an OAuth token will expire, if the OAuth token is hijacked or compromised, and the OAuth client that issues the token has more privileges then it needs, this will cause an unnecessary risk to your Genesys Cloud account and the data in it.

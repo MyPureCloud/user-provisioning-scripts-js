@@ -1,6 +1,6 @@
 const platformClient = require('purecloud-platform-client-v2');
 
-const sitesMap = new Map();
+const sitesMap = {};
 
 /*
     The getSiteByLogicalName() will look up a site based on its logical name from GenesysCloud from Genesys Cloud 

@@ -1,6 +1,6 @@
 const platformClient = require('purecloud-platform-client-v2');
 
-let phoneBasesMap = new Map();
+let phoneBasesMap = {};
 
 /*
     The getPhoneBaseByLogicalName() will look up a phonebase based on its logical name from GenesysCloud 

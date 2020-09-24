@@ -1,20 +1,20 @@
 const platformClient = require('purecloud-platform-client-v2');
 const retry = require('@lifeomic/attempt').retry;
 
-let groupsMap = new Map();
+let groupsMap = {};
 /*
     The getGroup() function will make a call to the platformClient.getGroups() call passing in target page number.
 */
 const getGroup = async (pageNum) => {
-  let opts = {
+  const opts = {
     pageSize: 50,
     pageNumber: pageNum,
   };
 
-  let apiInstance = new platformClient.GroupsApi();
+  const apiInstance = new platformClient.GroupsApi();
 
   try {
-    results = await apiInstance.getGroups(opts);
+    const results = await apiInstance.getGroups(opts);
     return results;
   } catch (e) {
     console.log(

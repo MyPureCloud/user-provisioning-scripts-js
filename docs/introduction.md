@@ -18,16 +18,16 @@ In addition, to the mechanics involved with calling the API, this developer guid
 
 To demonstrate how to provision and manage users, we are going to create a user provisioning script that will create a user, assign them to a chat group, assign them to a role and then create a WebRTC phone for them. The diagram below highlights the general flow of this script along with the APIs it is calling.
 
-![User Provisioning Architecture diagram]("resources/images/user_provisioning_arch_intro.png")
+![User Provisioning Architecture diagram]("mod_0_0_user_provisioning_arch_overview.png")
 
-This diagram is meant to be a general map of the process and will be used throughout the developer guide. If we take a look at diagram above, everything starts with a CSV file full of user data. That file will be read by the `src/user-provisioning.js` file and launch the process of creating a user, assigning them a group and a role, and then creating a WebRtc phone for the user.
+This diagram is meant to be a general map of the process and will be used throughout the developer guide. If we take a look at diagram above, everything starts with a CSV file full of user data. That file will be read by the `src/user-provisioning.js` file and launch the process of creating a user, assigning them a group and a role, and then creating a WebRTC phone for the user.
 
 Each of these steps in the diagram map to a different module of this developer starting guide. Each module discusses what the code in script is doing in detail. (The numbers in the diagram map to the modules listed below). The modules for guide are:
 
 1. Module 1: Authenticating and parsing the user file **(Need links to the modules here)**
 2. Module 2: Creating users in Genesys Cloud **(Need links to the modules here)**
 3. Module 3: Assigning users to chat groups and roles **(Need links to the modules here)**
-4. Module 4: Creating a Webrtc phone **(Need links to the modules here)**
+4. Module 4: Creating a WebRTC phone **(Need links to the modules here)**
 
 **Note**: In the diagram, along with each module we also list the Genesys Cloud JavaScript APIs we are going to use for that module.
 
@@ -52,7 +52,7 @@ All code was run using node version 11. To run the code you need to:
 5. To run the test cases, you can run: `npm run test`
 6. To run the actual code, you can change to the `src` directory and run: `node user-provisioning.js ../data/userdata.csv`
 
-   **Note**: This code will create the users against your organization, assign them to a group and a role so please be aware of this and be careful. This code is a tutorial for how to provision users. It has mininmal error handling and no rollback logic if something goes wrong.
+   **Note**: This code will create the users against your organization, assign them to a group and a role so please be aware of this and be careful. This code is a tutorial for how to provision users. It has minimal error handling and no rollback logic if something goes wrong.
 
 7. As an alternative to the `user-provisioning.js` script, there is a `user-provisioning-service.js` script that will allow you to run the "create user" code found in the script as a REST-based service. To run the code as a REST service, you can change to the `src` directory and run `node user-provisioning-service.js.` Once the service is started you can create a user by using a `POST http://localhost:3000/user`. The body for the service call is shown below:
 
