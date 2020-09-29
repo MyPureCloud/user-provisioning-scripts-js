@@ -5,15 +5,11 @@ const provision = require('./provision');
 dotenv.config();
 const filename = process.argv[2];
 
-//Main function.  Wrappering it with async to ensure that all async..await calls are properly fullfille
-
+//Main function
 (async () => {
   console.log(`Starting the user provisioner to parse csv file ${filename}`);
-  const token = await authApiProxy.authenticate(
-    process.env.GENESYS_CLIENT_ID,
-    process.env.GENESYS_CLIENT_SECRET
-  );
+  const token = await authApiProxy.authenticate(process.env.GENESYS_CLIENT_ID, process.env.GENESYS_CLIENT_SECRET);
 
-  console.log(`token: ${JSON.stringify(token, null, '\t')}`);
+  //console.log(`token: ${JSON.stringify(token, null, 4)}`);
   await provision.createUsers(filename);
 })();

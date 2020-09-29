@@ -1,11 +1,13 @@
 const platformClient = require('purecloud-platform-client-v2');
-const retry = require('@lifeomic/attempt').retry;
+const { retry } = require('@lifeomic/attempt');
+const { response } = require('express');
 
 let groupsMap = {};
+
 /*
     The getGroup() function will make a call to the platformClient.getGroups() call passing in target page number.
 */
-const getGroup = async (pageNum) => {
+async function getGroup(pageNum) {
   const opts = {
     pageSize: 50,
     pageNumber: pageNum,
@@ -14,16 +16,9 @@ const getGroup = async (pageNum) => {
   const apiInstance = new platformClient.GroupsApi();
 
   try {
-    const results = await apiInstance.getGroups(opts);
-    return results;
+    return await apiInstance.getGroups(opts);
   } catch (e) {
-    console.log(
-      `Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(
-        e,
-        null,
-        '\t'
-      )}`
-    );
+    console.log(`Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(e, null, 4)}`);
     return null;
   }
 };
@@ -37,52 +32,66 @@ const getGroup = async (pageNum) => {
 async function getGroups() {
   let groups = [];
 
-  //Do the first call and push the results to an array
-  group = await getGroup(1);
-  group != null ? groups.push(group.entities) : null;
+  let i = 1;
+  let pageCount = 0;
+  do {
+    const group = await getGroup(i);
 
-  //If the count is greater then 1 then go through and look up the result of the pages.
-  if (group != null && group.pageCount > 1) {
-    for (let i = 2; i <= group.pageCount; i += 1) {
-      group = await getGroup(i);
-      group != null ? groups.push(group.entities) : null;
+    if (group != null) {
+      pageCount = group.pageCount;
+      groups.push(group.entities);
     }
+    i++;
   }
+  while (i <= pageCount);
 
   groups
-    .flat(1) //Each result contains an array of records.  flat(1) will flatten this array of arrays one level deep
+    .flat(1)
     .filter((value) => value != null)
-    .map((value) => {
-      //Map through each result and extrace the logical name and the guid into a map
-      groupsMap[value.name] = value;
-    });
+    .map((value) => { groupsMap[value.name] = value; });
+
+  //Do the first call and push the results to an array
+  // const group = await getGroup(1);
+  // if (group != null) {
+  //   groups.push(group.entities);
+
+  //   for (let i = 2; i <= group.pageCount; i++) {
+  //     const group = await getGroup(i);
+  //     if (group != null) { groups.push(group.entities); }
+  //   }
+
+  //   groups
+  //     .flat(1)
+  //     .filter((value) => value != null)
+  //     .map((value) => { groupsMap[value.name] = value; });
+
+  // }
 
   //Cloning the internal representation to keep the data immutable
-  return {...groupsMap};
+  return { ...groupsMap };
 }
 
-const getGroupByName = async (groupName) => {
-  if (groupsMap[groupName] != null) {
-    return groupsMap[groupName];
-  } else {
+async function getGroupByName(groupName) {
+  if (groupsMap[groupName] == null) {
     await getGroups();
-    return {...groupsMap[groupName]};
   }
-};
+  return { ...groupsMap[groupName] };
+}
+
 
 /*
    Adds a user to a group.  Note: I am using retry logic on this call because we can have multiple users (remember we are asynchronous)
    and GenesysCloud uses an optimistic lock scheme to protect from multiple threads updating the same record at the same time.  
    So, if we get any kind of error on our calls, we will retry 5 times with an expotential back off on the calls
 */
-const addUsersToAGroup = async (groupId, userIds) => {
+async function addUsersToAGroup(groupId, userIds) {
   let apiInstance = new platformClient.GroupsApi();
 
   /*If we need to retry we always need to reread the groupVersion for the record*/
   try {
-    const groupVersion = (await apiInstance.getGroup(groupId)).version;
-    const results = await retry(
-      async (context) => {
+    await retry(
+      async () => {
+        const groupVersion = (await apiInstance.getGroup(groupId)).version;
         await apiInstance.postGroupMembers(groupId, {
           memberIds: userIds,
           version: groupVersion,
@@ -93,27 +102,18 @@ const addUsersToAGroup = async (groupId, userIds) => {
          exposes a version field.  If we get an error we are going to assume it is a versioning error and re-read the 
          group version and try to resubmit the error.
       */
-      {delay: 200, factor: 2, maxAttempts: 5}
+      { delay: 200, factor: 2, maxAttempts: 5 }
     );
   } catch (e) {
-    console.log(
-      `Error occurred while trying create group for user ${JSON.stringify(
-        userIds,
-        null,
-        '\t'
-      )}, error: ${JSON.stringify(e, null, '\t')}`
-    );
+    console.error(`Error occurred while trying create group for user.`, groupid, userIds, e);
   }
 };
 
 /* Return a list of Group Ids*/
-const getGroupIds = () => {
-  const groupIds = new Set(
-    Object.keys(groupsMap).map((key) => groupsMap[key].id)
-  );
-  return [...groupIds];
+function getGroupIds() {
+  return Object.values(groupsMap).map(value => value.id)
 };
 
 exports.getGroupIds = getGroupIds;
-exports.getGroupByName = getGroupByName; //Not ideal because the getGroupId has an implicit dependenc on getGroups
+exports.getGroupByName = getGroupByName;
 exports.addUsersToAGroup = addUsersToAGroup;

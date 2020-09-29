@@ -1,13 +1,12 @@
 const platformClient = require('purecloud-platform-client-v2');
-const retry = require('@lifeomic/attempt').retry;
-const {sleep} = require('@lifeomic/attempt');
+const { retry } = require('@lifeomic/attempt');
 
 /*
     When you create a web rtc phone you do not automatically associate it with the user.
     The getStationByWebRtcUserId() will look up the station for the web rtc phone and
     return it so that we can then assign the user to it.
 */
-const getStationByWebRtcUserId = async (userId) => {
+async function getStationByWebRtcUserId(userId) {
   let opts = {
     webRtcUserId: userId,
   };
@@ -16,11 +15,10 @@ const getStationByWebRtcUserId = async (userId) => {
 
   try {
     const results = await retry(
-      async (context) => {
+      async () => {
         const stations = await apiInstance.getStations(opts);
         /*If we cant find a station then throw an exception.  This will trigger a retry*/
         if (stations.entities.length === 0) {
-          console.log(`No station found retrying`);
           throw 'No station found, retrying';
         }
 
@@ -31,7 +29,7 @@ const getStationByWebRtcUserId = async (userId) => {
       When we lookup a station by name, the search engine can be behind in index the record so we retry several times until
       we find the station or give up.  In this case we wait a second between calls and give up after 6 times.
     */
-      {delay: 1000, factor: 1, maxAttempts: 6}
+      { delay: 1000, factor: 1, maxAttempts: 6 }
     );
 
     const station = {
@@ -42,13 +40,7 @@ const getStationByWebRtcUserId = async (userId) => {
 
     return station;
   } catch (err) {
-    console.log(
-      `Error while retrieving station with userId: ${userId}: ${JSON.stringify(
-        err,
-        null,
-        '\t'
-      )}`
-    );
+    console.log(`Error while retrieving station with userId: ${userId}: ${JSON.stringify(err, null, 4)}`);
     return null;
   }
 };
@@ -56,7 +48,7 @@ const getStationByWebRtcUserId = async (userId) => {
 /*
    Assigns a user to their webrtc phone so that when they login, they will automatically have a webrtc phone assigned to them
 */
-const assignUserToWebRtcPhone = async (userId) => {
+async function assignUserToWebRtcPhone(userId) {
   try {
     let apiInstance = new platformClient.UsersApi();
 
@@ -65,14 +57,8 @@ const assignUserToWebRtcPhone = async (userId) => {
 
     /*Assign the station*/
     await apiInstance.putUserStationDefaultstationStationId(userId, station.id);
-  } catch (error) {
-    console.log(
-      `Error occurred while assigning default station: ${JSON.stringify(
-        error,
-        null,
-        '\t'
-      )}`
-    );
+  } catch (e) {
+    console.error(`Error occurred while assigning default station for userId ${userId}`, e);
   }
 };
 

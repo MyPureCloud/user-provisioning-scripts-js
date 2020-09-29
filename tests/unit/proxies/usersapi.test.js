@@ -1,6 +1,6 @@
 const usersapi = require('../../../src/proxies/usersapi');
-const utils = require('../../utils');
-const {UsersApi} = require('purecloud-platform-client-v2');
+const { v4: uuidv4 } = require('uuid');
+const { UsersApi } = require('purecloud-platform-client-v2');
 
 jest.mock('purecloud-platform-client-v2');
 

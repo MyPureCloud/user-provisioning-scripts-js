@@ -159,7 +159,7 @@ Congratulations, if you ran this script and the `postUsers()` api was called, yo
 
 # Looking up Genesys Cloud Objects by Logical Name
 
-So far we have covered the creation of a Genesys Cloud user using the API. However, we want to do more then create a user, we also want to add that user to a chat group, assign them a security role and create a WebRTC phone for the user. In our csv file, we reference the group, the role, site and phonebase information by a logical name that is understandable to a human being. However, in Genesys Cloud almost all API interactions involving Genesys Cloud resources are accessed through a GUID. GUID (or UUID) is an acronym for 'Globally Unique Identifier' (or 'Universally Unique Identifier'). It is a 128-bit integer number used to identify resources. In Genesys Cloud we use GUID's to provide a unique key for created objects.
+So far we have covered the creation of a Genesys Cloud user using the API. However, we want to do more then create a user, we also want to add that user to a chat group, assign them a security role and create a WebRTC phone for the user. In our csv file, we reference the chat group, the role, site and phonebase information by a logical name that is understandable to a human being. However, in Genesys Cloud almost all API interactions involving Genesys Cloud resources are accessed through a GUID. GUID (or UUID) is an acronym for 'Globally Unique Identifier' (or 'Universally Unique Identifier'). It is a 128-bit integer number used to identify resources. In Genesys Cloud we use GUID's to provide a unique key for created objects.
 
 So, if we revisit our `createUser()` function from the `src/provision.js` script you can see that right after we create the user, we add some additional fields to the user object that will be user later on when we have to assign the user to groups and a role and create a WebRTC phone.
 
@@ -295,38 +295,189 @@ try {
   return results;
 } catch (e) {
   console.log(
-    `Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(
-      e,
-      null,
-      '\t'
-    )}`
+    `Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(e,null,4)}`
   );
   return null;
 }
 ```
 
-This code will return one page of data Group data that looks this:
+This code will return one page of data group data that looks this:
 
 ```javascript
-
+{
+  entities: [
+        {
+          //group data
+        },
+        {
+          //group data 
+        }  
+      ],
+  pageSize: 100,
+  pageNumber: 1,
+  total: 2,
+  firstUri: '/api/v2/groups?pageSize=100&pageNumber=1',
+  selfUri: '/api/v2/groups?pageSize=100&pageNumber=1',
+  lastUri: '/api/v2/groups?pageSize=100&pageNumber=1',
+  pageCount: 1,
+}
 ```
 
+Each individual group record returned in the call is contained within the `entities` attribute.  We are not going to look at the individual fields returned from the `getGroups()`.  These values are documented in the API call.  Instead we want to look at the pagination values returned in the above record.  When iterating through the pages we care about the `pageNumber` and `pageCount` fields.  The `pageNumber` field represents the page we are currently on.  The `pageCount` field is the total number of pages that are available to be returned.  So in the `getGroups()`. To retrieve all of the group data we get the first page of data and then we check to see if the first page is null. Remember, a `null` value in this context means an error occurred looking up the record.  If the value is not `null` we push the first page into the `groups` array.  We then proceed to call the `getGroup()` function one page at a time to retrieve the rest of the pages.
+
+```javascript
+//Do the first call and push the results to an array
+  group = await getGroup(1);
+  group != null ? groups.push(group.entities) : null;
+
+  //If the count is greater then 1 then go through and look up the result of the pages.
+  if (group != null && group.pageCount > 1) {
+    for (let i = 2; i <= group.pageCount; i += 1) {
+      group = await getGroup(i);
+      group != null ? groups.push(group.entities) : null;
+    }
+  }
+```
+
+As we retrieve a page we add the results to the `groups` array.  Once we have retrieved all of the pages, we should now have an a arrays within the `groups` array.  Remember, each page of data retrieves X number of records from the Genesys Cloud.  To make this array more searchable, we are going to flatten the array so that it is one-dimensional instead of two.  We will then filter out any `null` values and add an entry to the `groupsMap` object using the group name as the key and storing the individual record as a value.
+
+```javascript
+groups
+    .flat(1) //Each result contains an array of records.  flat(1) will flatten this array of arrays one level deep
+    .filter((value) => value != null)
+    .map((value) => {
+      groupsMap[value.name] = value;
+    });
+```
+
+The last action we take in the `getGroups()` function is to return a copy of the groupsMap back to the caller of the function.
+
+```javascript
+return {...groupsMap};
+```  
+
 ### Optimizing your API usage through caching
+In the functions `getGroups()` by name you can see we are storing records in a JavaScript literal object to avoid repeated calls to the Groups API.  Why are we caching this data instead of just calling the Groups API every time we need to read the data.  There are three reasons:
 
-### Pagination and Genesys Cloud
+1.  **Performance**.  Every time we make a distributed call, we are adding overhead to our application because the code has to call "off-box" to retrieve data.  If the dataset you are using is relatively small and does not change on a regular basis (e.g. group names-> to group ids), it makes more sense to cache the data if the values in the cache going to be "read" on a regular basis.
 
-## Looking up Site Name
+2.  **API Rate Limits**.  Genesys Cloud imposes an API rate limit of 300 calls per minute per OAuth client. This rate limit may change in the future so always reference the API rate limit documents on the developer center before beginning any new development efforts.[4]  Rate limiting is put in place by Genesys Cloud to prevent a single customer from negatively impacting the platform by issuing a high volume of calls in a a very short time period.  Be aware that when your OAuth client hits a rate limit, it will start receiving 429 HTTP status codes.  Your application should back off on its call volume until the rate limits have subsided. Again reference the developer center [4] for more specifics on rate limits and back-off strategies. 
 
-### API Rate Limiting
+3.  **API Fair Usage Policies**.  While API rate limits protect the Genesys Cloud platform from abusive bursts of traffic in a very short-time period, Genesys Cloud also implements a monthly fair use policy on all API calls to ensure a consistent experience for all customers.  The API fair usage policies are based on the number and type of Genesys Cloud seats you have purchased.  The goal is not to monetize the number of API calls, but rather ensure that Genesys Cloud computing resources are made fairly available to all customers.  Unlike the API rate limits, the API fair usage policies is shared amongst all of your OAuth Clients.  
 
-### API Fair Use
+**Note:**  Unlike the API rate limits, if you go over your allocated fair usage policy, you will be assessed overage charges.  For the details around the overage charges, please refer to the Genesys Cloud API Fair Usage policy. [5]  If you would like to see how much API usage you have consumed for the month, please refer to the API View Usage [5] page in the Genesys Cloud help documents. 
 
+## Looking up Site by a logical name
+
+In the previous sections, we talked about how to look up group information and how to navigate the pagination model used in the Genesys Cloud APIs.  We are now going to look at how we can retrieve site information by a logical name.  As stated earlier in this module, we are **not** going to walkthrough how to lookup site information, because the role and phonebase calls follow the exact same patterns as the site lookup.
+
+So lets begin by looking at the `getSiteByName()` function in the `src/proxies/sitesapi.js` file.
+
+```javascript
+const getSiteByName = async (siteName) => {
+  const results = sitesMap[siteName];
+  if (results != null) {
+    return results;
+  } else {
+    const resultsLookup = await getSiteByLogicalName(siteName);
+    return resultsLookup;
+  }
+};
+```
+
+This code follows the same pattern as the groups lookup.  It checks to see if the site value is in a cache (e.g. ```sitesMap``) and if it can not find the value in the cache, it attempts to look it up via the Genesys Cloud sites api.  The difference between the groups and sites lookup can be seen inside the `getSiteByNameLogicalName()` function call.
+
+```javascript
+const getSiteByLogicalName = async (logicalName) => {
+  const opts = {
+    name: logicalName,
+  };
+
+  const apiInstance = new platformClient.TelephonyProvidersEdgeApi();
+
+  try {
+    const results = await apiInstance.getTelephonyProvidersEdgesSites(opts);
+
+    const site = {
+      id: results.entities[0].id,
+      name: results.entities[0].name,
+      primarySites: results.entities[0].primarySites,
+    };
+
+    if (results != null) {
+      sitesMap[site.name] = site;
+      return {...site};
+    }
+
+    return null;
+  } catch (err) {
+    console.log(
+      `Error while retrieving site with name: ${logicalName}: ${JSON.stringify(
+        err,
+        null,
+        '\t'
+      )}`
+    );
+    return null;
+  }
+};
+```
+
+In the object code we define a Javascript literal Object called `opts` with a single parameter called `name`.
+
+```javascript
+  const opts = {
+    name: logicalName,
+  };
+```
+
+Most of the Genesys Cloud APIs that return a collection of core Genesys Cloud resources (e.g. sites, roles, phonebase) will provide additional query parameters that will allow you to pull back only instances that match the values specified in the query parameters. The ```name``` parameter is the most common parameter on these APIs. So when we call the Sites API [6], by passing in the above Object, we will get back the following result:
+
+```javascript
+{
+  entities: [
+        {
+          //site data
+        }  
+      ],
+  pageSize: 25,
+  pageNumber: 1,
+  total: 1,
+  firstUri: '/api/v2/sites?pageSize=100&pageNumber=1',
+  selfUri: '/api/v2/sites?pageSize=100&pageNumber=1',
+  lastUri: '/api/v2/sites?pageSize=100&pageNumber=1',
+  pageCount: 1,
+}
+```
+
+To pull out the site record, we need to pull the first record form the `entities` object on the returned payload.
+
+```javascript
+const site = {
+  id: results.entities[0].id,
+  name: results.entities[0].name,
+  primarySites: results.entities[0].primarySites,
+}
+```
+
+The site data is then placed in the `sitesMap` and the `site` object is returned.
+
+```javascript 
+if (results != null) {
+      sitesMap[site.name] = site;
+      return {...site};
+}
+```
 <br/><br/>
 
 # Summary
+This module has a lot of information.  The reason for this is that when you firs
 
 # References
 
 1. [csv-parser library](https://www.npmjs.com/package/csv-parser)
 2. [Genesys Cloud User API Docs](https://developer.mypurecloud.com/api/rest/v2/users/)
 3. [Genesys Cloud Groups API Docs](https://developer.mypurecloud.com/api/rest/v2/groups/)
+4. [Genesys Cloud API Rate Limits](https://developer.mypurecloud.com/api/rest/rate_limits.html)
+5. [Genesys Cloud API Fair Usage Policies](https://help.mypurecloud.com/articles/api-overage-charge/)
+6. [Genesys Cloud Sites API Docs](https://developer.mypurecloud.com/api/rest/v2/sites/)

@@ -5,7 +5,7 @@ let phoneBasesMap = {};
 /*
     The getPhoneBaseByLogicalName() will look up a phonebase based on its logical name from GenesysCloud 
 */
-const getPhoneBaseByLogicalName = async (logicalName) => {
+async function getPhoneBaseByLogicalName(logicalName) {
   let opts = {
     name: logicalName,
   };
@@ -13,42 +13,29 @@ const getPhoneBaseByLogicalName = async (logicalName) => {
   let apiInstance = new platformClient.TelephonyProvidersEdgeApi();
 
   try {
-    const results = await apiInstance.getTelephonyProvidersEdgesPhonebasesettings(
-      opts
-    );
-
-    const phoneBase = {
-      id: results.entities[0].id,
-      name: results.entities[0].name,
-      lines: results.entities[0].lines,
-    };
+    const results = await apiInstance.getTelephonyProvidersEdgesPhonebasesettings(opts);
 
     if (results != null) {
+      const phoneBase = {
+        id: results.entities[0].id,
+        name: results.entities[0].name,
+        lines: results.entities[0].lines,
+      };
+
       phoneBasesMap[phoneBase.name] = phoneBase;
-      return {...phoneBase};
+      return { ...phoneBase };
     }
 
     return null;
-  } catch (err) {
-    console.log(
-      `Error while retrieving phonebase with name: ${logicalName}: ${JSON.stringify(
-        err,
-        null,
-        '\t'
-      )}`
-    );
+  } catch (e) {
+    console.error(`Error while retrieving phonebase with name: ${logicalName}`, e);
     return null;
   }
 };
 
-const getPhoneBaseByName = async (phoneBaseName) => {
-  const results = phoneBasesMap[phoneBaseName];
-  if (results != null) {
-    return results;
-  } else {
-    const resultsLookup = await getPhoneBaseByLogicalName(phoneBaseName);
-    return resultsLookup;
-  }
+async function getPhoneBaseByName(phoneBaseName) {
+  if (!(phoneBaseName in phoneBasesMap)) { await getPhoneBaseByLogicalName(phoneBaseName); }
+  return { ...phoneBasesMap[phoneBaseName] }
 };
 
 exports.getPhoneBaseByName = getPhoneBaseByName;

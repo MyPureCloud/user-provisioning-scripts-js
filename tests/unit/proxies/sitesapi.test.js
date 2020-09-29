@@ -1,6 +1,6 @@
 const sitesapi = require('../../../src/proxies/sitesapi');
-const utils = require('../../utils');
-const {TelephonyProvidersEdgeApi} = require('purecloud-platform-client-v2');
+const { v4: uuidv4 } = require('uuid');
+const { TelephonyProvidersEdgeApi } = require('purecloud-platform-client-v2');
 
 jest.mock('purecloud-platform-client-v2');
 
@@ -71,22 +71,21 @@ describe('When retrieving sites: ', () => {
     TelephonyProvidersEdgeApi.mockImplementation(() => {
       return {
         getTelephonyProvidersEdgesSites: (opts) => {
-          throw 'An error was encountered';
+          throw new Error('An error was encountered was looking up site data');
         },
       };
     });
 
     const results = await sitesapi.getSiteByName();
-    expect(results).toBe(null);
     expect(TelephonyProvidersEdgeApi).toHaveBeenCalledTimes(1);
   });
 
   test('When a call to getSiteByName, it should a return the specific site record ', async () => {
-    const targetSite = {id: utils.generateUUID(), name: 'Indianapolis'};
+    const targetSite = { id: uuidv4(), name: 'Indianapolis' };
 
     const mock_call = buildSiteMock(targetSite, 1);
 
-    expected_result = {id: targetSite.id, name: targetSite.name};
+    expected_result = { id: targetSite.id, name: targetSite.name };
 
     TelephonyProvidersEdgeApi.mockImplementation(() => {
       return {

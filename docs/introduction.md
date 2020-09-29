@@ -31,6 +31,9 @@ Each of these steps in the diagram map to a different module of this developer s
 
 **Note**: In the diagram, along with each module we also list the Genesys Cloud JavaScript APIs we are going to use for that module.
 
+In addition to the modules, this developer starting guide include a glossary for many Genesys Cloud concepts.  **(Need a link to the glossary)**
+
+
 # Pre-requisites
 
 \

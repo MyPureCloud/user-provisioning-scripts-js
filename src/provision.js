@@ -10,102 +10,107 @@ const phoneApiProxy = require('./proxies/phoneapi');
 const rolesApiProxy = require('./proxies/rolesapi');
 const stationsApiProxy = require('./proxies/stationsapi');
 
-/*Takes a list of users (sourced from a csv file) and assigns them to a chat group*/
-const assignUsersToGroups = async (users) => {
-  const groupIds = groupsApiProxy.getGroupIds();
-
-  groupIds.forEach(async (groupId) => {
-    //Find each user in a group
+/**
+ * Takes a list of users (sourced from a csv file) and assigns them to a chat group
+ * @param {*} users 
+ */
+async function assignUsersToGroups(users) {
+  for (groupId of groupsApiProxy.getGroupIds()) {
     const userIdsInGroup = users
-      .filter((user) => groupId === user.groupId)
-      .map((user) => user.userId);
+      .filter((user) => groupId === user.group.id)
+      .map((user) => user.id);
 
     if (userIdsInGroup.length > 0) {
       try {
         await groupsApiProxy.addUsersToAGroup(groupId, userIdsInGroup);
       } catch (e) {
-        console.log(
-          `Error in assignUsersToGroup: ${JSON.stringify(e, null, '\t')}`
-        );
+        console.error(`Error in assignUsersToGroup`, user, e);
       }
     }
-  });
+  }
 };
 
 /*Takes a list of users (sourced from a csv file) and assigns them a role*/
-const assignUsersToRoles = async (users) => {
-  const roleIds = rolesApiProxy.getRoleIds();
-
-  roleIds.forEach(async (roleId) => {
-    //Find each user in a role
+async function assignUsersToRoles(users) {
+  for (roleId of rolesApiProxy.getRoleIds()) {
     const userIdsInRole = users
-      .filter((user) => roleId === user.roleId)
-      .map((user) => user.userId);
+      .filter((user) => roleId === user.role.id)
+      .map((user) => user.id);
 
     if (userIdsInRole.length > 0) {
       try {
         await rolesApiProxy.addUsersToARole(roleId, userIdsInRole);
       } catch (e) {
-        console.log(
-          `Error in assignUsersToRoles: ${JSON.stringify(e, null, '\t')}`
-        );
+        console.error(`Error in assignUsersToRoles`, users, e);
       }
     }
-  });
+  }
 };
 
+
+/**
+ * Creates an indivdiual user in Genesys Cloud and then looks up additional information 
+ * for the user.  (e.g. group, site, role and phonebase)
+ * @param {*} user 
+ */
+async function createUser(user) {
+  const createdUser = await usersApiProxy.createUser(user);
+  user.id = createdUser.id;
+  user.group = await groupsApiProxy.getGroupByName(user.GROUP);
+  user.site = await sitesApiProxy.getSiteByName(user.SITENAME);
+  user.role = await rolesApiProxy.getRoleByName(user.ROLE);
+  user.phonebase = await phoneBaseApiProxy.getPhoneBaseByName(user.PHONEBASE);
+
+  return user;
+}
+
+/**
+ * Takes a list of users from the createUser() function and assigns the users to a group, a role and a site.
+ * @param {*} users 
+ */
+async function postUserCreation(users) {
+  console.log(`Assigning users to groups`);
+  await assignUsersToGroups(users);
+
+  console.log(`Assigning users to roles`);
+  await assignUsersToRoles(users);
+
+  console.log(`Creating phones for users`);
+  for (user of users) {
+    await phoneApiProxy.createWebRTCPhone(user);
+    await stationsApiProxy.assignUserToWebRtcPhone(user.id);
+  }
+}
+
 /*
-  The loadUsers function will parse the csv file in question and then create
+  The createUsers function will parse the csv file in question and then create
   the user. 
 
   The code is going to use a scatter/pattern.  As each CSV record is read via a stream,
   it will call create the user.  After each CREATE API is called, it will push a promise into the
   the resultsPromise array.  Then, once the file is completely process, the code will WAIT for all promises to resolve.
 */
-const createUsers = async (filename) => {
+async function createUsers(filename) {
   let resultPromises = [];
 
   console.log('Beginning user creation');
   fs.createReadStream(filename)
     .pipe(csv())
     .on('data', async (user) => {
-      resultPromises.push(
-        //We push the promise heres
-        usersApiProxy.createUser(user).then(async (userResult) => {
-          //Here is where we create the user.
-          user['userId'] = userResult.id;
-          user['groupId'] = (
-            await groupsApiProxy.getGroupByName(user.GROUP)
-          ).id;
-          user['site'] = await sitesApiProxy.getSiteByName(user.SITENAME);
-          user['roleId'] = (await rolesApiProxy.getRoleByName(user.ROLE)).id;
-          user['phoneBase'] = await phoneBaseApiProxy.getPhoneBaseByName(
-            user.PHONEBASE
-          );
-
-          return user;
-        })
-      );
+      resultPromises.push(createUser(user))
     })
     .on('end', async () => {
       const users = await Promise.all(resultPromises); //We wait for all of the promises to resolve
-      console.log(`User creation is completed`);
-
-      console.log(`Assigning users to groups`);
-      await assignUsersToGroups(users);
-
-      console.log(`Assigning users to roles`);
-      await assignUsersToRoles(users);
-
-      console.log(`Creating phones for users`);
-      users.map(async (user) => {
-        await phoneApiProxy.createWebRTCPhone(user);
-        await stationsApiProxy.assignUserToWebRtcPhone(user.userId);
-      });
+      await postUserCreation(users);
     });
-};
+}
 
-const createUsersService = async (userRequest) => {
+/**
+ * Called from the Express web service. This function will create a single user and assign them
+ * to a group, role and then create a webrtc phone for them.
+ * @param {*} userRequest 
+ */
+async function createUsersService(userRequest) {
   const user = {
     NAME: userRequest.name,
     EMAIL: userRequest.email,
@@ -118,30 +123,16 @@ const createUsersService = async (userRequest) => {
 
   try {
     console.log(`Creating a user`);
-    const userResults = await usersApiProxy.createUser(user);
-    user.userId = userResults.id;
-    user.groupId = (await groupsApiProxy.getGroupByName(user.GROUP)).id;
-    user.site = await sitesApiProxy.getSiteByName(user.SITENAME);
-    user.roleId = (await rolesApiProxy.getRoleByName(user.ROLE)).id;
-    user.phoneBase = await phoneBaseApiProxy.getPhoneBaseByName(user.PHONEBASE);
+    const userResults = await createUser(user);
 
     const users = [user];
-    console.log(`Assigning users to groups`);
-    await assignUsersToGroups(users);
-
-    console.log(`Assigning users to roles`);
-    await assignUsersToRoles(users);
-
-    console.log(`Creating phones for users`);
-    users.map(async (userRecord) => {
-      await phoneApiProxy.createWebRTCPhone(userRecord);
-      await stationsApiProxy.assignUserToWebRtcPhone(userRecord.userId);
-    });
+    await postUserCreation(user);
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };
 
+exports.createUser = createUser;
 exports.createUsers = createUsers;
 exports.createUsersService = createUsersService;
 exports.assignUsersToGroups = assignUsersToGroups;

@@ -1,8 +1,7 @@
 const platformClient = require('purecloud-platform-client-v2');
 
-const createWebRTCPhone = async (user) => {
+async function createWebRTCPhone(user) {
   let apiInstance = new platformClient.TelephonyProvidersEdgeApi();
-
   const phone = {
     name: `${user.NAME.replace(' ', '_')}_WEBRTC_PHONE`,
     state: 'active',
@@ -12,14 +11,14 @@ const createWebRTCPhone = async (user) => {
       selfUri: user.site.selfUri,
     },
     phoneBaseSettings: {
-      id: user.phoneBase.id,
-      name: user.phoneBase.name,
-      selfUri: user.phoneBase.selfUri,
+      id: user.phonebase.id,
+      name: user.phonebase.name,
+      selfUri: user.phonebase.selfUri,
     },
     lineBaseSettings: {
-      id: user.phoneBase.lines[0].id,
-      name: user.phoneBase.lines[0].name,
-      selfUri: user.phoneBase.lines[0].selfUri,
+      id: user.phonebase.lines[0].id,
+      name: user.phonebase.lines[0].name,
+      selfUri: user.phonebase.lines[0].selfUri,
     },
     phoneMetaBase: {
       id: 'inin_webrtc_softphone.json',
@@ -27,11 +26,11 @@ const createWebRTCPhone = async (user) => {
     },
     lines: [
       {
-        name: user.phoneBase.lines[0].name,
+        name: user.phonebase.lines[0].name,
         lineBaseSettings: {
-          id: user.phoneBase.lines[0].id,
-          name: user.phoneBase.lines[0].name,
-          selfUri: user.phoneBase.lines[0].selfUri,
+          id: user.phonebase.lines[0].id,
+          name: user.phonebase.lines[0].name,
+          selfUri: user.phonebase.lines[0].selfUri,
         },
       },
     ],
@@ -46,22 +45,15 @@ const createWebRTCPhone = async (user) => {
       mediaCodecs: ['audio/opus'],
     },
     webRtcUser: {
-      id: user.userId,
+      id: user.id,
       name: user.NAME.replace(' ', '_'),
     },
   };
 
   try {
-    const results = await apiInstance.postTelephonyProvidersEdgesPhones(phone);
-    return results;
+    return await apiInstance.postTelephonyProvidersEdgesPhones(phone);
   } catch (e) {
-    console.log(
-      `Error has occurred while trying to create a phone for user ${
-        user.NAME
-      }, error: ${JSON.stringify(e, null, '\t')},
-      PHONE: ${JSON.stringify(phone, null, '\t')}
-      `
-    );
+    console.err0r(`Error has occurred while trying to create a phone for user.`, user, phone, e);
     return null;
   }
 };

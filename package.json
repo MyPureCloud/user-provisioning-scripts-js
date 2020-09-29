@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest --coverage",
-    "test-watch": "jest --watchAll --coverage"
+    "test": "jest --coverage --silent",
+    "test-watch": "jest --watchAll --coverage --silent"
   },
   "author": "John Carnell",
   "bin": {
@@ -18,7 +18,8 @@
     "csv-parser": "^2.3.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "purecloud-platform-client-v2": "^87.0.0"
+    "purecloud-platform-client-v2": "^87.0.0",
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
     "jest": "^26.4.2"

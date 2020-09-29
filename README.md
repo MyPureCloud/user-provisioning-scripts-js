@@ -11,9 +11,9 @@ Welcome to the user-provisioning-scripts-js repo. This repo contains a node.js-b
 
 All code was run using node version 14.3.0. The code should work with Node 11 and above. To run the code you need to first:
 
-1. Ensure that node 11 are higher is running on your server.
-2. Run `npm i` to install all of the pacakges and dependencies.
-3. Setup a OAuth Client Credential grant in your OAUTH instance. For purposes of this tutorial, the OAuth Client was configured with the Communicate Admin and Telephony Admin roles.
+1. Ensure that node 14 or higher is running on your server.
+2. Run `npm i` to install all of the packages and dependencies.
+3. Setup a OAuth client Credential grant in your OAUTH instance. For the purposes of this tutorial, an OAuth client was configured with the Communicate Admin and Telephony Admin roles.
 
 4. Set the following environment variables:
 
@@ -25,7 +25,7 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
 5. To run the test cases, you can run: `npm run test`
 6. To run the actual code, you can change to the src directory and run: `node index.js ../data/userdata.csv`
 
-   **Note**: This code will create the users against your organization, assign them to a group and a role so please be aware of this and be careful. This code is a tutorial for how to provision users. It has mininmal error handling and no rollback logic if something goes wrong.
+   **Note**: This code will create the users against your organization, assign them to a group and a role so please be aware of this and be careful. This code is a tutorial for how to provision users. It has minimal error handling and no rollback logic if something goes wrong.
 
 ## Code Organization
 

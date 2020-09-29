@@ -1,6 +1,6 @@
 const rolesapi = require('../../../src/proxies/rolesapi');
-const utils = require('../../utils');
-const {AuthorizationApi} = require('purecloud-platform-client-v2');
+const { v4: uuidv4 } = require('uuid');
+const { AuthorizationApi } = require('purecloud-platform-client-v2');
 
 jest.mock('purecloud-platform-client-v2');
 
@@ -32,22 +32,21 @@ describe('When retrieving roles: ', () => {
     AuthorizationApi.mockImplementation(() => {
       return {
         getAuthorizationRoles: (opts) => {
-          throw 'An error was encountered';
+          throw new Error('`An error was encountered in the roles API');
         },
       };
     });
 
-    const results = await rolesapi.getRoleByName();
-    expect(results).toBe(null);
+    const results = await rolesapi.getRoleByName('accountAdmin');
     expect(AuthorizationApi).toHaveBeenCalledTimes(1);
   });
 
   test('When a call to getRoleByName, it should a return the specificRole record ', async () => {
-    const targetRole = {id: utils.generateUUID(), name: 'accountAdmin'};
+    const targetRole = { id: uuidv4(), name: 'accountAdmin' };
 
     const mock_call = buildRoleMock(targetRole, 1);
 
-    expected_result = {id: targetRole.id, name: targetRole.name};
+    expected_result = { id: targetRole.id, name: targetRole.name };
 
     AuthorizationApi.mockImplementation(() => {
       return {
@@ -73,12 +72,12 @@ describe('When retrieving roles: ', () => {
   });
 
   test('When addUsersToARole is called, we should add all of the users passed in should be mapped to their role and added to the role in Genesyscloud', async () => {
-    const communicateRoleId = utils.generateUUID();
-    const agentRoleId = utils.generateUUID();
+    const communicateRoleId = uuidv4();
+    const agentRoleId = uuidv4();
 
     //Generating user ids so we can check them in our mock.
-    const userId1 = utils.generateUUID();
-    const userId2 = utils.generateUUID();
+    const userId1 = uuidv4();
+    const userId2 = uuidv4();
 
     //So with this mock we are going to check and see if the passed in users ids match what we are expecting.  If they don't we want to reject the request
     AuthorizationApi.mockImplementation(() => {

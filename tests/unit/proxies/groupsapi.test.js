@@ -1,6 +1,6 @@
 const groupsapi = require('../../../src/proxies/groupsapi');
-const utils = require('../../utils');
-const {GroupsApi} = require('purecloud-platform-client-v2');
+const { v4: uuidv4 } = require('uuid');
+const { GroupsApi } = require('purecloud-platform-client-v2');
 
 jest.mock('purecloud-platform-client-v2');
 
@@ -98,23 +98,19 @@ describe('When retrieving groups: ', () => {
     GroupsApi.mockImplementation(() => {
       return {
         getGroups: (opts) => {
-          throw 'An error was encountered';
+          throw Error('An error was encountered while retrieving a group');
         },
       };
     });
 
     const results = await groupsapi.getGroupByName('Discourse');
-    expect(results).toBeDefined();
-    expect(Object.keys(results)).toHaveLength(0);
     expect(GroupsApi).toHaveBeenCalledTimes(1);
   });
 
   test('When a call to getGroupByName(), it should a return the specific group record ', async () => {
-    const targetGroup = {id: utils.generateUUID(), name: 'Annuities'};
+    const targetGroup = { id: uuidv4(), name: 'Annuities' };
 
     const mock_call = buildGroupMock(targetGroup, 1);
-
-    expected_result = {id: targetGroup.id, name: targetGroup.name};
 
     GroupsApi.mockImplementation(() => {
       return {
@@ -141,26 +137,18 @@ describe('When retrieving groups: ', () => {
 
   test('When a call to getGroupByName() and there are multiple pages returned by the genesys cloud api, we should return an aggregated resultset', async () => {
     const groups_page_1 = [
-      {id: utils.generateUUID(), name: 'Annuities'},
-      {id: utils.generateUUID(), name: 'Discourse'},
+      { id: uuidv4(), name: 'Annuities' },
+      { id: uuidv4(), name: 'Discourse' },
     ];
 
     const groups_page_2 = [
-      {id: utils.generateUUID(), name: 'IRA'},
-      {id: utils.generateUUID(), name: '401K'},
+      { id: uuidv4(), name: 'IRA' },
+      { id: uuidv4(), name: '401K' },
     ];
 
     const mock_call_1 = buildMultiGroupMock(groups_page_1, 2);
     const mock_call_2 = buildMultiGroupMock(groups_page_2, 2);
-
-    expected_results = {
-      'Annuities': groups_page_1[0].id,
-      'Discourse': groups_page_1[1].id,
-      'IRA': groups_page_2[0].id,
-      '401K': groups_page_2[1].id,
-    };
-
-    callCount = 0;
+    let callCount = 0;
 
     GroupsApi.mockImplementation(() => {
       return {
@@ -179,6 +167,7 @@ describe('When retrieving groups: ', () => {
 
     const discourseResults = await groupsapi.getGroupByName('Discourse');
     const iraResults = await groupsapi.getGroupByName('IRA');
+
     expect(discourseResults.id).toBe(groups_page_1[1].id);
     expect(iraResults.id).toBe(groups_page_2[0].id);
 
@@ -186,19 +175,19 @@ describe('When retrieving groups: ', () => {
   });
 
   test('When addUsersToAGroup() is called, we should add all of the users passed in should be mapped to their group and added to the role in GenesysCloud', async () => {
-    const annuitiesGroupId = utils.generateUUID();
-    const iraGroupId = utils.generateUUID();
+    const annuitiesGroupId = uuidv4();
+    const iraGroupId = uuidv4();
 
     //Generating user ids so we can check them in our mock.
-    const userId1 = utils.generateUUID();
-    const userId2 = utils.generateUUID();
+    const userId1 = uuidv4();
+    const userId2 = uuidv4();
 
     //So with this mock we are going to check and see if the passed in users ids match what we are expecting.  If they don't we want to reject the request
     GroupsApi.mockImplementation(() => {
       return {
         getGroup: async (groupId) => {
           return new Promise((resolve, request) => {
-            resolve({version: '100'});
+            resolve({ version: '100' });
           });
         },
         postGroupMembers: async (groupId, body) => {

@@ -48,7 +48,7 @@ const filename = process.argv[2];
     process.env.GENESYS_CLIENT_SECRET
   );
 
-  console.log(`token: ${JSON.stringify(token, null, '\t')}`);
+  console.log(`token: ${JSON.stringify(token, null, 4)}`);
   await provision.createUsers(filename);
 })();
 ```
@@ -83,7 +83,7 @@ const authenticate = async (clientId, clientSecret) => {
     return authData;
   } catch (e) {
     console.log(`Authentication error has occurred -> ${e}`);
-    process.exit();
+    process.exit(1);
   }
 };
 
@@ -114,21 +114,21 @@ const authData = await client.loginClientCredentialsGrant(
 return authData;
 ```
 
-**Note:** The Genesys Cloud JavaScript SDK returns a JavaScript `Promise` on all of its SDK calls. This means that when you make a call against the API in the JavaScript SDK, you must either use the `Promises.then().catch()` approach for processing the results of the call or the `async/await` approach. The approach you chose is based on your personal preference.
+**Note:** The Genesys Cloud JavaScript SDK returns a JavaScript `Promise` on all of its SDK calls. This means that when you make a call against the API in the JavaScript SDK, you must either use the `Promises.then().catch()` approach for processing the results of the call or the `async/await` approach. The approach you choose is based on your personal preference.
 
-Most of the code in this developer starting guide will use the `async/await` approach. Once the authentication process has successfully completed, the function will return an instance of the `AuthData`. The contents of the `AuthData` class will be cover later on in next section.
+Most of the code in this developer starting guide will use the `async/await` approach. Once the authentication process has successfully completed, the function returns a Promise that resolves to an instance of `AuthDat`. The contents of the `AuthData` class will be covered later on in next section.
 
 At this point the Genesys Cloud Javascript SDK will cache the return OAuth token and use it on every SDK call. You do not need to do anything else with the token unless it expires. If a token expires, your application will need to re-authenticate using its client id and client secret.
 
 ## OAuth Token Expiration
 
-When an OAuth is client is setup in Genesys Cloud, the administrator will configure how long (in seconds) the token will be valid for this specific OAuth client. When `loginClientCredentialsGrant()` is called you will retrieve an `AuthData` object containing the following information:
+When an OAuth client is setup in Genesys Cloud, the administrator will configure how long (in seconds) the token will be valid for this specific OAuth client. When `loginClientCredentialsGrant()` is called you will retrieve an `AuthData` object containing the following information:
 
 1. **accessToken**: The OAuth token that will be presented on each SDK call.
-2. **tokenExpiryTime**: The number of seconds the token will expire
+2. **tokenExpiryTime**: The milliseconds representation of the GMT date when the token will expire
 3. **tokenExpiryTimeString**: The GMT date/time the token will expire
 
-If you were to log the data within the `AuthData` object using a `` console.log(`token: ${JSON.stringify(token, null, '\t')}`); ``, you would see output that might look something like this:
+If you were to log the data within the `AuthData` object using a `` console.log(`token: ${JSON.stringify(token, null, 4)}`); ``, you would see output that might look something like this:
 
 ```javascript
 token: {
@@ -137,8 +137,6 @@ token: {
         "tokenExpiryTimeString": "Sat, 19 Sep 2020 18:04:19 GMT"
 }
 ```
-
-**NOTE TO REVIEW**: WHAT FORMAT IS tokenExpiryTime in (seconds, milliseconds, the value does not convert to anything meaningful. Wonder if we are dealing with an integer overflow issues)
 
 At this point, the user-provisioning script is now authenticated and can begin the process of creating users.
 

@@ -1,6 +1,6 @@
 const phonebaseapi = require('../../../src/proxies/phonebaseapi');
-const utils = require('../../utils');
-const {TelephonyProvidersEdgeApi} = require('purecloud-platform-client-v2');
+const { v4: uuidv4 } = require('uuid');
+const { TelephonyProvidersEdgeApi } = require('purecloud-platform-client-v2');
 
 jest.mock('purecloud-platform-client-v2');
 
@@ -72,17 +72,16 @@ describe('When retrieving phonebase information: ', () => {
       };
     });
 
-    const results = await phonebaseapi.getPhoneBaseByName();
-    expect(results).toBe(null);
+    const results = await phonebaseapi.getPhoneBaseByName('AmyName');
     expect(TelephonyProvidersEdgeApi).toHaveBeenCalledTimes(1);
   });
 
   test('When a call to getPhoneBaseByName(), it should a return the specific phone record ', async () => {
-    const targetPhoneBase = {id: utils.generateUUID(), name: 'WebRTC Phone'};
+    const targetPhoneBase = { id: uuidv4(), name: 'WebRTC Phone' };
 
     const mock_call = buildPhoneBaseMock(targetPhoneBase);
 
-    expected_result = {id: targetPhoneBase.id, name: targetPhoneBase.name};
+    expected_result = { id: targetPhoneBase.id, name: targetPhoneBase.name };
 
     TelephonyProvidersEdgeApi.mockImplementation(() => {
       return {
