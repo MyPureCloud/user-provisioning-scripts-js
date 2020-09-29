@@ -33,10 +33,7 @@ async function getSiteByLogicalName(logicalName) {
   }
 };
 
-//const getSitePromises={}
-//await (getSitePromises[siteName]= getSitePromises[siteName] || getSiteByLogicalName(siteName) );
-const getSiteByName = async (siteName) => {
-
+async function getSiteByName(siteName) {
   //Potential race condition using the in or !=null if you are mutating because two calls could come in at the same time and one could be done
   //before the data is loaded.  Its fine if the data is not mutating results
   if (!(siteName in sitesMap)) { await getSiteByLogicalName(siteName) }

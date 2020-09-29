@@ -53,7 +53,7 @@ async function createWebRTCPhone(user) {
   try {
     return await apiInstance.postTelephonyProvidersEdgesPhones(phone);
   } catch (e) {
-    console.err0r(`Error has occurred while trying to create a phone for user.`, user, phone, e);
+    console.error(`Error has occurred while trying to create a phone for user.`, user, phone, e);
     return null;
   }
 };

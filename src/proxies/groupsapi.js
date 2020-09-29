@@ -41,6 +41,7 @@ async function getGroups() {
       pageCount = group.pageCount;
       groups.push(group.entities);
     }
+
     i++;
   }
   while (i <= pageCount);
@@ -49,23 +50,6 @@ async function getGroups() {
     .flat(1)
     .filter((value) => value != null)
     .map((value) => { groupsMap[value.name] = value; });
-
-  //Do the first call and push the results to an array
-  // const group = await getGroup(1);
-  // if (group != null) {
-  //   groups.push(group.entities);
-
-  //   for (let i = 2; i <= group.pageCount; i++) {
-  //     const group = await getGroup(i);
-  //     if (group != null) { groups.push(group.entities); }
-  //   }
-
-  //   groups
-  //     .flat(1)
-  //     .filter((value) => value != null)
-  //     .map((value) => { groupsMap[value.name] = value; });
-
-  // }
 
   //Cloning the internal representation to keep the data immutable
   return { ...groupsMap };
