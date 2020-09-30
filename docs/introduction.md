@@ -24,10 +24,10 @@ This diagram is meant to be a general map of the process and will be used throug
 
 Each of these steps in the diagram map to a different module of this developer starting guide. Each module discusses what the code in script is doing in detail. (The numbers in the diagram map to the modules listed below). The modules for guide are:
 
-1. Module 1: Authenticating and parsing the user file **(Need links to the modules here)**
-2. Module 2: Creating users in Genesys Cloud **(Need links to the modules here)**
-3. Module 3: Assigning users to chat groups and roles **(Need links to the modules here)**
-4. Module 4: Creating a WebRTC phone **(Need links to the modules here)**
+1. Module 1: Authenticating and parsing the user file //TODO **(Need links to the modules here)**
+2. Module 2: Creating users in Genesys Cloud //TODO **(Need links to the modules here)**
+3. Module 3: Assigning users to chat groups and roles //TODO **(Need links to the modules here)**
+4. Module 4: Creating a WebRTC phone //TODO**(Need links to the modules here)**
 
 **Note**: In the diagram, along with each module we also list the Genesys Cloud JavaScript APIs we are going to use for that module.
 
@@ -81,7 +81,7 @@ All of the code for this project is logged under the `src` directory. All unit t
     src/
       user-provisioning.js  <= The starting point for launching the process as batch script.
       user-provisioning-service.js <= The starting point for running the process as a REST service.
-      provisiong.js         <= The "business logic" that carries out the overall process
+      provisioning.js       <= The "business logic" that carries out the overall process
       proxies/              <= Each major API has their own proxy class that abstracts away
                                how we call each GenesysCloud API.  This allows us to hide
                                whether we call things with the Javascript API, REST API or whether we want to wrapper code.

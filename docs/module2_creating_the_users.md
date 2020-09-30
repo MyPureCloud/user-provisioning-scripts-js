@@ -1,6 +1,6 @@
 # Overview
 
-In this module we are going to cover the second part of user-provisioning process, user creation.
+In this module we are going to cover the second part of user-provisioning process: user creation.
 
 ![User Provisioning Module 2 Architecture diagram]("resources/images/mod_2_1_user_provisioning_arch_overview.png")
 
@@ -13,98 +13,81 @@ The diagram below illustrates these 3 steps.
 
 2.  **Create the user record in Genesys Cloud**. Once we have parsed a user record from the CSV file, we will use the Genesys Cloud `User` api to create the record.
 
-3.  **Looking up Genesys Cloud Objects by Logical Name**. This provisioning does more then create the just create the user record. It also assigns the user to a group, assigns them a role and creates a WebRTC phone. When we do these actions, we will to look up several Genesys Cloud objects by their logical name and then use data from theses objects to finish the user-provisioning tasks. We will do this by logical name lookup immediately after we create the user record.
+3.  **Look up Genesys Cloud Objects by a logical name**. This provisioning does more then create the just create the user record. It also assigns the user to a group, assigns them a role and creates a WebRTC phone. When we do these actions, we will to look up several Genesys Cloud objects by their logical name and then use data from these objects to finish the user-provisioning tasks. 
 
-So all of the code that carries out the user provisioning process is found in the `src/provisioning.js` file. The key function that we are going to look at from this modules is the `createUsers()` function. The code for this function is shown below
+All of the code that carries out the user provisioning process is found in the `src/provisioning.js` file. The key function that we are going to look at from this modules is the `createUsers()` function. The code for this function is shown below.
 
 ```javascript
-const createUsers = async (filename) => {
+async function createUsers(filename) {
   let resultPromises = [];
 
   console.log('Beginning user creation');
   fs.createReadStream(filename)
     .pipe(csv())
     .on('data', async (user) => {
-      resultPromises.push(
-        usersApiProxy.createUser(user).then(async (userResult) => {
-          //Here is where we create the user.
-          user['userId'] = userResult.id;
-          user['groupId'] = (
-            await groupsApiProxy.getGroupByName(user.GROUP)
-          ).id;
-          user['site'] = await sitesApiProxy.getSiteByName(user.SITENAME);
-          user['roleId'] = (await rolesApiProxy.getRoleByName(user.ROLE)).id;
-          user['phoneBase'] = await phoneBaseApiProxy.getPhoneBaseByName(
-            user.PHONEBASE
-          );
-
-          return user;
-        })
-      );
+      resultPromises.push(createUser(user))
     })
     .on('end', async () => {
-      //NOTE THERE IS MORE CODE HERE THAT WILL BE COVERED IN THE NEXT FUNCTION
+      const users = await Promise.all(resultPromises); //We wait for all of the promises to resolve
+      await postUserCreation(users);
     });
-};
+}
 ```
 
-Lets go ahead and start unpacking the code above.
+Let's go ahead and start unpacking this code.
 
 # Parsing the CSV File
 
-To parse the CSV file we are going to use the `csv-parser` library. This library will take a csv filename and will parse each record in the file into a JavaScript object containing the data. The keys in the JavaScript object will be derived from the first-line of the csv file If you look in the `data` directory of this project, you will find an example csv file call `userdata.csv`. Now the csv-parser library does not read the whole record in at a time. Instead, it will read one record at at time and will trigger a `data`.
+To parse the CSV file we are going to use the `csv-parser` library. This library will take a csv filename and will parse each record in the file into a JavaScript object containing the data. The keys in the JavaScript object will be derived from the first-line of the csv file. If you look in the `data` directory of this project, you will find an example csv file called `userdata.csv`. The csv-parser library does not read the whole record in at a time. Instead, it will read one record at at time and will send a `data` event.
 
 ```javascript
 fs.createReadStream(filename)
     .pipe(csv())
-    .on('data', async (user) => { ... }
+    .on('data', async (user) => {resultPromises.push(createUser(user))
 ```
 
-When this `data` event is triggered. it will invoke the callback passed into the `.on('data')` event handler.
+When a `data` event is received we are going to create a user using the `user` record passed into the call and the `createUser()` function found in the `src/provisioning.js file`.
 
 ```javascript
- .on('data', async (user) => {
-      resultPromises.push(
-        //We push the promise heres
-        usersApiProxy.createUser(user).then(async (userResult) => { ... }
-   ...
-        )
- }
+async function createUser(user) {
+  const createdUser = await usersApiProxy.createUser(user);
+  user.id = createdUser.id;
+  user.group = await groupsApiProxy.getGroupByName(user.GROUP);
+  user.site = await sitesApiProxy.getSiteByName(user.SITENAME);
+  user.role = await rolesApiProxy.getRoleByName(user.ROLE);
+  user.phonebase = await phoneBaseApiProxy.getPhoneBaseByName(user.PHONEBASE);
+
+  return user;
+}
 ```
 
-There is a lot going on in this code. When a `data` event is received we are going to create a user using the `user` record passed into the call and the `usersApiProxy.createUser()` function.
+The `createUser()` function is an asynchronous function that carries out the creation of the user in Genesys Cloud. After as user is created, we will need to lookup several additional pieces of information by the logical names of the object stored in the CSV file (e.g. GROUP, SITENAME, ROLE, PHONEBASE).  We will be walking through how to look up various Genesys Cloud objects by their logical name later on in this document.  
 
-```javascript
-usersApiProxy.createUser(user).then(async (userResult) => { ... }
-```
+//TODO **need a link to the glossary file.**
+**Note**: As reminder, the glossary file contains the business definitions for site, group, role and phonebase 
 
-The `createUser()` function is an asynchronous function and after it is done processing the creation of the user record, we need to do additional work to prep the individual user for next step work. Since the `createUser()` function is asynchronous we do not want to hold up the node event-loop waiting for the the `createUser()` call to complete. So we are going to collect all of the promises from the call into array called `resultPromises`. The end result of this, is that as we process user creations, we will end up with a collection of promises() that must be fulfilled before we can do any additional work.
-
-So lets look at what is actually involved with creating a user account in the Genesys Cloud platform.
+Let's look at what is actually involved with creating a user account in the Genesys Cloud platform.
 
 # Creating the user record in Genesys cloud
 
 The actual creation of the user occurs in the `src/proxies/userapi.js` class. Shown below is the `createUser()` function from `userapi.js`.
 
 ```Javascript
-const createUser = async (userInfo) => {
+const platformClient = require('purecloud-platform-client-v2');
+
+async function createUser(userInfo) {
   apiInstance = new platformClient.UsersApi();
 
   const user = {
     name: userInfo.NAME,
     email: userInfo.EMAIL,
-    password: userInfo.PASSWORD,
+    password: userInfo.password,
   };
 
   try {
-    const result = await apiInstance.postUsers(user);
-    return result;
+    return await apiInstance.postUsers(user);
   } catch (e) {
-    console.log(
-      `Error has occurred while trying to create user ${
-        userInfo.name
-      }, error: ${JSON.stringify(e)}`
-    );
+    console.error(`Error has occurred while trying to create user ${userInfo.name}`, e);
 
     return null;
   }
@@ -131,16 +114,12 @@ We then call the `apiInstance.postUsers()` function from our `apiInstance` objec
 
 ```javascript
 try {
-   const result = await apiInstance.postUsers(user);
-   return result;
- } catch (e) {
-   console.log(
-     `Error has occurred while trying to create user ${
-       userInfo.name
-     }, error: ${JSON.stringify(e)}`
-   );
+    return await apiInstance.postUsers(user);
+  } catch (e) {
+    console.error(`Error has occurred while trying to create user ${userInfo.name}`, e);
 
-   return null;
+    return null;
+  }
 ```
 
 Since this call is an asynchronous call, we have to use an `await` keyword and then surround the call to the `apiInstance.postUsers(user)` with a `try..catch{}` statement. If we successfully retrieve a value, we return it immediately. We then log an error out to the console and let a `null` value be returned from the `createUser()` function call.
@@ -152,7 +131,7 @@ Since this call is an asynchronous call, we have to use an `await` keyword and t
 Congratulations, if you ran this script and the `postUsers()` api was called, you will have created some users. Now, lets say you want to delete these users and re-run this script. There a few things you need to know about how Genesys Cloud deals with user deletion.
 
 1. The Genesys Cloud `UserApi deleteUser()` function (which the Genesys Cloud UI uses) does not actually "hard" delete the user account. Instead the Genesys Cloud server "soft" deletes the user record.
-2. Instead the user's status is marked as deleted and the user does not show up in the UI unless you explicitly search using the "delete" state in the UI.
+2. A soft delete marks the user's status as deleted.  The user does not show up in the UI unless you explicitly search using the "delete" state in the UI.
 3. Users that are "soft" deleted will not be purged from the platform and will remain their in perpetuity.
 4. While a user create does generate a unique GUIID, the email address used in the username is also considered unique and if you try to "re-create" a user with the same email as a user who is in a deleted status, the create user code will fail with an HTTP 400 status code and a message about conflicting users.
 5. If you want to restore the user you need to update the user using a `patchUser()` call in the SDK (or the route in the API) and the `state` field on the passed in `User` objects to be in `active` state.
@@ -161,19 +140,14 @@ Congratulations, if you ran this script and the `postUsers()` api was called, yo
 
 So far we have covered the creation of a Genesys Cloud user using the API. However, we want to do more then create a user, we also want to add that user to a chat group, assign them a security role and create a WebRTC phone for the user. In our csv file, we reference the chat group, the role, site and phonebase information by a logical name that is understandable to a human being. However, in Genesys Cloud almost all API interactions involving Genesys Cloud resources are accessed through a GUID. GUID (or UUID) is an acronym for 'Globally Unique Identifier' (or 'Universally Unique Identifier'). It is a 128-bit integer number used to identify resources. In Genesys Cloud we use GUID's to provide a unique key for created objects.
 
-So, if we revisit our `createUser()` function from the `src/provision.js` script you can see that right after we create the user, we add some additional fields to the user object that will be user later on when we have to assign the user to groups and a role and create a WebRTC phone.
+If we revisit our `createUser()` function from the `src/provision.js` script you can see that right after we create the user, we add some additional fields to the user object that will be user later on when we have to assign the user to groups and a role and create a WebRTC phone.
 
 ```javascript
-usersApiProxy.createUser(user).then(async (userResult) => {
-  //Here is where we create the user.
-  user['userId'] = userResult.id;                                                   //Map the GUID for the create user back to the original user object
-  user['groupId'] = (await groupsApiProxy.getGroupByName(user.GROUP)).id;           //Lookup the group GUID by logical name
-  user['site'] = await sitesApiProxy.getSiteByName(user.SITENAME);                  //Lookup the site  by logical name
-  user['roleId'] = (await rolesApiProxy.getRoleByName(user.ROLE)).id;               //Lookup the role GUID by logical name
-  user['phoneBase'] = await phoneBaseApiProxy.getPhoneBaseByName(user.PHONEBASE);   //Lookup the phonebase by logical name
-
-  return user;
-}
+  user.id = createdUser.id;
+  user.group = await groupsApiProxy.getGroupByName(user.GROUP);
+  user.site = await sitesApiProxy.getSiteByName(user.SITENAME);
+  user.role = await rolesApiProxy.getRoleByName(user.ROLE);
+  user.phonebase = await phoneBaseApiProxy.getPhoneBaseByName(user.PHONEBASE);
 ```
 
 Each of these lookups are calling to functions that were written to call the Genesys Cloud JavaScript SDK. We are not going to go through each of these calls in detail.
@@ -192,14 +166,13 @@ During the course of the discussion around looking up logical names, we will als
 We are going to start our exploration of looking up Group Name using the Groups API[3]. To begin our discussion, we are going to look at the `getGroupByName()` function found inside the `src/proxies/groupsapi.js` file.
 
 ```javascript
-const getGroupByName = async (groupName) => {
-  if (groupsMap[groupName] != null) {
-    return groupsMap[groupName];
-  } else {
+async function getGroupByName(groupName) {
+  if (groupsMap[groupName] == null) {
     await getGroups();
-    return {...groupsMap[groupName]};
   }
-};
+  return { ...groupsMap[groupName] };
+}
+
 ```
 
 In the function, we are checking to see if group name we are trying to look up already exists in a Javascript literal object called `groupsMap`. If the value already exists in the groupsMap instance, we will return the value we will return the instance without calling out to Genesys Cloud. If the value does not exist, we are then going to lookup all of the groups in the org by calling the `getGroups()` function in the `groupsapi.js` file
@@ -212,47 +185,58 @@ The `getGroups()` function is shown here:
 async function getGroups() {
   let groups = [];
 
-  //Do the first call and push the results to an array
-  group = await getGroup(1);
-  group != null ? groups.push(group.entities) : null;
+  let i = 1;
+  let pageCount = 0;
+  do {
+    const group = await getGroup(i);
 
-  //If the count is greater then 1 then go through and look up the result of the pages.
-  if (group != null && group.pageCount > 1) {
-    for (let i = 2; i <= group.pageCount; i += 1) {
-      group = await getGroup(i);
-      group != null ? groups.push(group.entities) : null;
+    if (group != null) {
+      pageCount = group.pageCount;
+      groups.push(group.entities);
     }
+
+    i++;
   }
+  while (i <= pageCount);
 
   groups
-    .flat(1) //Each result contains an array of records.  flat(1) will flatten this array of arrays one level deep
+    .flat(1)
     .filter((value) => value != null)
-    .map((value) => {
-      //Map through each result and extrace the logical name and the guid into a map
-      groupsMap[value.name] = value;
-    });
+    .forEach((value) => { groupsMap[value.name] = value; });
 
   //Cloning the internal representation to keep the data immutable
-  return {...groupsMap};
+  return { ...groupsMap };
 }
 ```
 
-So the getGroups() function is a pretty big function, but it's primary purpose is to really handle pages of data that might returned from our Genesys Cloud API. The first line of this function is going to declare an array that will hold the results for all of the calls out to the groups API.
+So the `getGroups()` function is a pretty big function, but it's primary purpose is to really handle pages of data that might returned from our Genesys Cloud API. The first line of this function is going to declare an array that will hold the results for all of the calls out to the groups API.
 
 ```javascript
 let groups = [];
 ```
 
-Next, we are going to retrieve our first page of data. To do this we are get to call function in the `groupsapi.js` file call getGroup(), passing in as a parameter the page number we want to retrieve.
+Next, we are going to retrieve our data data. To do this we are get to call `getGroup(`) function in the `groupsapi.js`, passing in as a parameter the page number we want to retrieve.
 
 ```javascript
-group = await getGroup(1);
-```
+let i = 1;
+  let pageCount = 0;
+  do {
+    const group = await getGroup(i);
 
-The `getGroup()` function looks up a single page of group data for the organization. The `getGroup()` function is shown below.
+    if (group != null) {
+      pageCount = group.pageCount;
+      groups.push(group.entities);
+    }
+
+    i++;
+  }
+  while (i <= pageCount);
+  ```
+
+In the above chunk of code, we use a `do..while{}` loop to retrieve the first page of data using the `getGroup()` function to look up a single page of group data for the organization.  The `getGroup()` function is shown below.
 
 ```javascript
-const getGroup = async (pageNum) => {
+async function getGroup(pageNum) {
   const opts = {
     pageSize: 100,
     pageNumber: pageNum,
@@ -261,16 +245,9 @@ const getGroup = async (pageNum) => {
   const apiInstance = new platformClient.GroupsApi();
 
   try {
-    const results = await apiInstance.getGroups(opts);
-    return results;
+    return await apiInstance.getGroups(opts);
   } catch (e) {
-    console.log(
-      `Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(
-        e,
-        null,
-        '\t'
-      )}`
-    );
+    console.log(`Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(e, null, 4)}`);
     return null;
   }
 };
@@ -288,17 +265,12 @@ const opts = {
 Genesys Cloud will allow you to return between 25 - 100 records per page. When retrieving data for a script or service, I recommend retrieving the maximum number of records per page to cut down on the number of API calls you have to make. After you have set up you query options, the call to retrieve the page is pretty straightforward, with a `GroupsApi` object being instantiated and the `getGroups()` method on the instance being called.
 
 ```javascript
-const apiInstance = new platformClient.GroupsApi();
-
 try {
-  const results = await apiInstance.getGroups(opts);
-  return results;
-} catch (e) {
-  console.log(
-    `Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(e,null,4)}`
-  );
-  return null;
-}
+    return await apiInstance.getGroups(opts);
+  } catch (e) {
+    console.log(`Error while retrieving group for page number: ${pageNum}: ${JSON.stringify(e, null, 4)}`);
+    return null;
+  }
 ```
 
 This code will return one page of data group data that looks this:
@@ -323,41 +295,32 @@ This code will return one page of data group data that looks this:
 }
 ```
 
-Each individual group record returned in the call is contained within the `entities` attribute.  We are not going to look at the individual fields returned from the `getGroups()`.  These values are documented in the API call.  Instead we want to look at the pagination values returned in the above record.  When iterating through the pages we care about the `pageNumber` and `pageCount` fields.  The `pageNumber` field represents the page we are currently on.  The `pageCount` field is the total number of pages that are available to be returned.  So in the `getGroups()`. To retrieve all of the group data we get the first page of data and then we check to see if the first page is null. Remember, a `null` value in this context means an error occurred looking up the record.  If the value is not `null` we push the first page into the `groups` array.  We then proceed to call the `getGroup()` function one page at a time to retrieve the rest of the pages.
+Each individual group record returned in the call is contained within the `entities` attribute.  We are not going to look at the individual fields returned from the `getGroups()`.  These values are documented in the API call.  Instead we want to look at the pagination values returned in the above record.  When iterating through the pages we care about the `pageNumber` and `pageCount` fields.  The `pageNumber` field represents the page we are currently on.  The `pageCount` field is the total number of pages that are available to be returned.  So in the `getGroups()`. To retrieve all of the group data we get the first page of data and then we check to see if the first page is null. Remember, a `null` value in this context means an error occurred looking up the record.  If the value is not `null` we push the first page into the `groups` array and set our pageCount variable being used in our `do..while{}` look to be the same value as `group.pageCount()`.
 
 ```javascript
-//Do the first call and push the results to an array
-  group = await getGroup(1);
-  group != null ? groups.push(group.entities) : null;
-
-  //If the count is greater then 1 then go through and look up the result of the pages.
-  if (group != null && group.pageCount > 1) {
-    for (let i = 2; i <= group.pageCount; i += 1) {
-      group = await getGroup(i);
-      group != null ? groups.push(group.entities) : null;
-    }
-  }
+ if (group != null) {
+      pageCount = group.pageCount;
+      groups.push(group.entities);
+}
 ```
 
 As we retrieve a page we add the results to the `groups` array.  Once we have retrieved all of the pages, we should now have an a arrays within the `groups` array.  Remember, each page of data retrieves X number of records from the Genesys Cloud.  To make this array more searchable, we are going to flatten the array so that it is one-dimensional instead of two.  We will then filter out any `null` values and add an entry to the `groupsMap` object using the group name as the key and storing the individual record as a value.
 
 ```javascript
 groups
-    .flat(1) //Each result contains an array of records.  flat(1) will flatten this array of arrays one level deep
+    .flat(1)
     .filter((value) => value != null)
-    .map((value) => {
-      groupsMap[value.name] = value;
-    });
+    .forEach((value) => { groupsMap[value.name] = value; });
 ```
 
-The last action we take in the `getGroups()` function is to return a copy of the groupsMap back to the caller of the function.
+The last action we take in the `getGroups()` function is to return a copy of the `groupsMap`object back to the caller of the function.
 
 ```javascript
 return {...groupsMap};
 ```  
 
 ### Optimizing your API usage through caching
-In the functions `getGroups()` by name you can see we are storing records in a JavaScript literal object to avoid repeated calls to the Groups API.  Why are we caching this data instead of just calling the Groups API every time we need to read the data.  There are three reasons:
+In the function `getGroupByName()` you can see we are storing records in a JavaScript literal object to avoid repeated calls to the `Groups` API.  Why are we caching this data instead of just calling the `Groups` API every time we need to read the data.  There are three reasons:
 
 1.  **Performance**.  Every time we make a distributed call, we are adding overhead to our application because the code has to call "off-box" to retrieve data.  If the dataset you are using is relatively small and does not change on a regular basis (e.g. group names-> to group ids), it makes more sense to cache the data if the values in the cache going to be "read" on a regular basis.
 
@@ -374,21 +337,17 @@ In the previous sections, we talked about how to look up group information and h
 So lets begin by looking at the `getSiteByName()` function in the `src/proxies/sitesapi.js` file.
 
 ```javascript
-const getSiteByName = async (siteName) => {
-  const results = sitesMap[siteName];
-  if (results != null) {
-    return results;
-  } else {
-    const resultsLookup = await getSiteByLogicalName(siteName);
-    return resultsLookup;
-  }
+async function getSiteByName(siteName) {
+  if (!(siteName in sitesMap)) { await getSiteByLogicalName(siteName) }
+  return { ...sitesMap[siteName] };
 };
+
 ```
 
-This code follows the same pattern as the groups lookup.  It checks to see if the site value is in a cache (e.g. ```sitesMap``) and if it can not find the value in the cache, it attempts to look it up via the Genesys Cloud sites api.  The difference between the groups and sites lookup can be seen inside the `getSiteByNameLogicalName()` function call.
+This code follows the same pattern as the groups lookup.  It checks to see if the site value is in a cache (e.g. ```sitesMap``) and if it can not find the value in the cache, it attempts to look it up via the Genesys Cloud `Sites` api.  The difference between the groups and sites lookup can be seen inside the `getSiteByNameLogicalName()` function call.
 
 ```javascript
-const getSiteByLogicalName = async (logicalName) => {
+async function getSiteByLogicalName(logicalName) {
   const opts = {
     name: logicalName,
   };
@@ -396,28 +355,22 @@ const getSiteByLogicalName = async (logicalName) => {
   const apiInstance = new platformClient.TelephonyProvidersEdgeApi();
 
   try {
-    const results = await apiInstance.getTelephonyProvidersEdgesSites(opts);
+    const sites = await apiInstance.getTelephonyProvidersEdgesSites(opts);
 
-    const site = {
-      id: results.entities[0].id,
-      name: results.entities[0].name,
-      primarySites: results.entities[0].primarySites,
-    };
+    if (sites != null) {
+      const site = {
+        id: sites.entities[0].id,
+        name: sites.entities[0].name,
+        primarySites: sites.entities[0].primarySites,
+      };
 
-    if (results != null) {
       sitesMap[site.name] = site;
-      return {...site};
+      return { ...site };
     }
 
     return null;
   } catch (err) {
-    console.log(
-      `Error while retrieving site with name: ${logicalName}: ${JSON.stringify(
-        err,
-        null,
-        '\t'
-      )}`
-    );
+    console.error(`Error while retrieving site with name: ${logicalName}.`, err);
     return null;
   }
 };
@@ -454,24 +407,30 @@ To pull out the site record, we need to pull the first record form the `entities
 
 ```javascript
 const site = {
-  id: results.entities[0].id,
-  name: results.entities[0].name,
-  primarySites: results.entities[0].primarySites,
-}
+  id: sites.entities[0].id,
+  name: sites.entities[0].name,
+  primarySites: sites.entities[0].primarySites,
+};
 ```
 
 The site data is then placed in the `sitesMap` and the `site` object is returned.
 
 ```javascript 
-if (results != null) {
-      sitesMap[site.name] = site;
-      return {...site};
+sitesMap[site.name] = site;
+return { ...site };
 }
 ```
-<br/><br/>
+
+At this point we have gone through all of the code we needed to create a Genesys Cloud user and retrieved all the data necessary to add that a user to a group, assign them a role and then create a WebRTC phone for them.  In the next module, we are going to show the APIs needed to assign the created users to groups and roles.
 
 # Summary
-This module has a lot of information.  The reason for this is that when you firs
+This module covered the tasks involved with creating a user in Genesys Cloud.  Specifically we:
+
+1. Used the User API to create a user.
+2. Examined how to lookup up Genesys Cloud objects by a logical name. 
+3. Reviewed where and when we should use caching.  We also looked at the Genesys Cloud API Rate limits and Genesys Cloud Fair Use policy.
+4. Reviewed how and when to use pagination when dealing with lookups that return large amounts of data.
+5. Reviewed how to use query parameters with Genesys Cloud objects to perform single item lookups of common Genesys Cloud objects (e.g. site, roles, etc...)
 
 # References
 

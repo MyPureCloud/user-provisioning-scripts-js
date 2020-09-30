@@ -13,13 +13,13 @@ async function getPhoneBaseByLogicalName(logicalName) {
   let apiInstance = new platformClient.TelephonyProvidersEdgeApi();
 
   try {
-    const results = await apiInstance.getTelephonyProvidersEdgesPhonebasesettings(opts);
+    const phoneBases = await apiInstance.getTelephonyProvidersEdgesPhonebasesettings(opts);
 
-    if (results != null) {
+    if (phoneBases != null) {
       const phoneBase = {
-        id: results.entities[0].id,
-        name: results.entities[0].name,
-        lines: results.entities[0].lines,
+        id: phoneBases.entities[0].id,
+        name: phoneBases.entities[0].name,
+        lines: phoneBases.entities[0].lines,
       };
 
       phoneBasesMap[phoneBase.name] = phoneBase;

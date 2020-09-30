@@ -40,26 +40,21 @@ const provision = require('./provision');
 dotenv.config();
 const filename = process.argv[2];
 
-//Main function.  Wrappering it with async to ensure that all async..await calls are properly fullfill
+//Main function
 (async () => {
   console.log(`Starting the user provisioner to parse csv file ${filename}`);
-  const token = await authApiProxy.authenticate(
-    process.env.GENESYS_CLIENT_ID,
-    process.env.GENESYS_CLIENT_SECRET
-  );
+  const token = await authApiProxy.authenticate(process.env.GENESYS_CLIENT_ID, process.env.GENESYS_CLIENT_SECRET);
 
-  console.log(`token: ${JSON.stringify(token, null, 4)}`);
+  //console.log(`token: ${JSON.stringify(token, null, 4)}`);
   await provision.createUsers(filename);
 })();
+
 ```
 
 For purposes of the user-provisioning scripts, we wrap all of the calls out to the Genesys Cloud API's in their own files (under the `proxies` directory) that will perform the calls against the SDK. To begin the authentication process we call the `authApiProxy.authenticate()` method:
 
 ```javascript
-const token = await authApiProxy.authenticate(
-  process.env.GENESYS_CLIENT_ID,
-  process.env.GENESYS_CLIENT_SECRET
-);
+ const token = await authApiProxy.authenticate(process.env.GENESYS_CLIENT_ID, process.env.GENESYS_CLIENT_SECRET);
 ```
 
 For the `user-provisioning.js` script we pull the OAuth client id and OAuth client secret directly from an environment variable and pass them to `authApiProxy.authenticate()`.
@@ -72,17 +67,13 @@ const platformClient = require('purecloud-platform-client-v2');
    The authenticate function is going to take the OAuth client id and secret and get a OAuth client credential token
    that will be used for all of the Javascript API calls.
 */
-const authenticate = async (clientId, clientSecret) => {
+async function authenticate(clientId, clientSecret) {
   const client = platformClient.ApiClient.instance;
 
   try {
-    const authData = await client.loginClientCredentialsGrant(
-      clientId,
-      clientSecret
-    );
-    return authData;
+    return await client.loginClientCredentialsGrant(clientId,clientSecret);
   } catch (e) {
-    console.log(`Authentication error has occurred -> ${e}`);
+    console.error(`Authentication error has occurred.`, e);
     process.exit(1);
   }
 };
@@ -107,11 +98,7 @@ const client = platformClient.ApiClient.instance;
 Now with the client instance at hand, we can authenticate using the `loginClientCredentialsGrant()` method on the `client` instance. We pass in the client id and secret.
 
 ```javascript
-const authData = await client.loginClientCredentialsGrant(
-  clientId,
-  clientSecret
-);
-return authData;
+return await client.loginClientCredentialsGrant(clientId,clientSecret);
 ```
 
 **Note:** The Genesys Cloud JavaScript SDK returns a JavaScript `Promise` on all of its SDK calls. This means that when you make a call against the API in the JavaScript SDK, you must either use the `Promises.then().catch()` approach for processing the results of the call or the `async/await` approach. The approach you choose is based on your personal preference.

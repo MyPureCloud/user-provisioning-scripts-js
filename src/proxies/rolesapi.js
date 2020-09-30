@@ -14,12 +14,12 @@ async function getAuthorizationRoleByLogicalName(logicalName) {
   let apiInstance = new platformClient.AuthorizationApi();
 
   try {
-    const results = await apiInstance.getAuthorizationRoles(opts);
+    const roles = await apiInstance.getAuthorizationRoles(opts);
 
-    if (results != null) {
+    if (roles != null) {
       const role = {
-        id: results.entities[0].id,
-        name: results.entities[0].name,
+        id: roles.entities[0].id,
+        name: roles.entities[0].name,
       };
 
       rolesMap[role.name] = role;

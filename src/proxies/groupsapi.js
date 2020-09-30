@@ -9,7 +9,7 @@ let groupsMap = {};
 */
 async function getGroup(pageNum) {
   const opts = {
-    pageSize: 50,
+    pageSize: 100,
     pageNumber: pageNum,
   };
 
@@ -49,7 +49,7 @@ async function getGroups() {
   groups
     .flat(1)
     .filter((value) => value != null)
-    .map((value) => { groupsMap[value.name] = value; });
+    .forEach((value) => { groupsMap[value.name] = value; });
 
   //Cloning the internal representation to keep the data immutable
   return { ...groupsMap };

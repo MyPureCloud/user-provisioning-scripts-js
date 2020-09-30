@@ -13,13 +13,13 @@ async function getSiteByLogicalName(logicalName) {
   const apiInstance = new platformClient.TelephonyProvidersEdgeApi();
 
   try {
-    const results = await apiInstance.getTelephonyProvidersEdgesSites(opts);
+    const sites = await apiInstance.getTelephonyProvidersEdgesSites(opts);
 
-    if (results != null) {
+    if (sites != null) {
       const site = {
-        id: results.entities[0].id,
-        name: results.entities[0].name,
-        primarySites: results.entities[0].primarySites,
+        id: sites.entities[0].id,
+        name: sites.entities[0].name,
+        primarySites: sites.entities[0].primarySites,
       };
 
       sitesMap[site.name] = site;
@@ -34,8 +34,6 @@ async function getSiteByLogicalName(logicalName) {
 };
 
 async function getSiteByName(siteName) {
-  //Potential race condition using the in or !=null if you are mutating because two calls could come in at the same time and one could be done
-  //before the data is loaded.  Its fine if the data is not mutating results
   if (!(siteName in sitesMap)) { await getSiteByLogicalName(siteName) }
   return { ...sitesMap[siteName] };
 };
