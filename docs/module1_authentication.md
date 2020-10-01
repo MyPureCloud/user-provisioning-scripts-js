@@ -1,5 +1,3 @@
-# Overview
-
 This module will cover how to authenticate the user-provisioning script with Genesys Cloud using the Genesys Cloud JavaScript API. [1]
 
 In terms of the overall architecture, the diagram below will show the specific place in the user provisioning process we will be working in for this module:

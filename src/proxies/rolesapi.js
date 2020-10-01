@@ -1,5 +1,4 @@
 const platformClient = require('purecloud-platform-client-v2');
-const { retry } = require('@lifeomic/attempt');
 
 let rolesMap = {};
 
@@ -48,12 +47,7 @@ async function addUsersToARole(roleId, userIds) {
   let apiInstance = new platformClient.AuthorizationApi();
 
   try {
-    await retry(
-      async (context) => {
-        await apiInstance.putAuthorizationRoleUsersAdd(roleId, userIds);
-      },
-      { delay: 200, factor: 2, maxAttempts: 5 }
-    );
+    await apiInstance.putAuthorizationRoleUsersAdd(roleId, userIds);
   } catch (e) {
     console.error(`Error occurred while trying add users to a role.`, roleId, userIds, e);
   }

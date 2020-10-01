@@ -1,5 +1,3 @@
-# Overview
-
 In this module we are going to cover the second part of user-provisioning process: user creation.
 
 ![User Provisioning Module 2 Architecture diagram]("resources/images/mod_2_1_user_provisioning_arch_overview.png")
