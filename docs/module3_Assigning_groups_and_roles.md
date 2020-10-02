@@ -1,6 +1,6 @@
 In this module we are going to assign our created users the group and roles defined within our CSV file.  These two steps are shown below in the architectural diagram for this developer starting guide.
 
-![User Provisioning Module 3 Architecture diagram]("resources/images/mod_3_1_user_provisioning_arch_overview.png")
+![User Provisioning Module 3 Architecture diagram](resources/images/mod_3_1_user_provisioning_arch_overview.png)
 
 If you remember from the last module, we start all work on creating and provisioning the user in the `src/provisioning.js` file.  The entry point for this work is the `createUser()` function.
 
@@ -223,6 +223,6 @@ The next module will be the final step in this developer starting guide, creatin
 
 # References
 
-1. [Groups API](https://developer.mypurecloud.com/api/rest/v2/groups/)
+1. [Groups API](/api/rest/v2/groups/)
 2. [Attempt](https://github.com/lifeomic/attempt)
-3. [Authorization API](https://developer.mypurecloud.com/api/rest/v2/authorization/)
+3. [Authorization API](/api/rest/v2/authorization/)

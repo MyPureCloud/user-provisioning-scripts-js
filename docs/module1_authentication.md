@@ -2,7 +2,7 @@ This module will cover how to authenticate the user-provisioning script with Gen
 
 In terms of the overall architecture, the diagram below will show the specific place in the user provisioning process we will be working in for this module:
 
-![User Provisioning Module 1 diagram]("resources/images/mod_1_1_user_provisioning_arch_overview.png")
+![User Provisioning Module 1 diagram](resources/images/mod_1_1_user_provisioning_arch_overview.png)
 
 ## Authenticating with the Genesys Cloud
 
@@ -151,8 +151,8 @@ In the next module, we will review how we will parse the CSV file containing the
 
 # References
 
-1. [Genesys Cloud JavaScript API](https://developer.mypurecloud.com/api/rest/client-libraries/javascript/)
-2. [OAuth 2 Overview](https://developer.mypurecloud.com/api/rest/authorization/index.html#access_tokens)
-3. [Developer Center API Guide](https://developer.mypurecloud.com/api/rest/v2/)
-4. [API Explorer](https://developer.mypurecloud.com/developer-tools/#/api-explorer)
-5. [API Rate Limits](https://developer.mypurecloud.com/api/rest/tips/#api_rate_limiting)
+1. [Genesys Cloud JavaScript API](/api/rest/client-libraries/javascript/)
+2. [OAuth 2 Overview](/api/rest/authorization/index.html#access_tokens)
+3. [Developer Center API Guide](/api/rest/v2/)
+4. [API Explorer](/developer-tools/#/api-explorer)
+5. [API Rate Limits](/api/rest/tips/#api_rate_limiting)

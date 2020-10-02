@@ -4,26 +4,26 @@ This is the last module in this developer starting guide.  At this point we have
 
 1. How to create a user in Genesys Cloud. 
 2. Lookup all the auxiliary information we will need to assign the user to a group, assign the user a role and create a WebRTC phone.
-3. Assign the user to a group
+3. Assign the user to a group.
 4. Assign the user to a role.
 
 We are now going to show you how to create a WebRTC phone for a user and assign it to the user as a default station.  We are at this point in our architectural diagram we have been using for this tutorial.
 
-![User Provisioning Module 4 Architecture diagram]("resources/images/mod_4_1_user_provisioning_arch_overview.png")
+![User Provisioning Module 4 Architecture diagram](resources/images/mod_4_1_user_provisioning_arch_overview.png)
 
 Before we begin looking at the code to create a WebRTC phone and assign it to a user, we need to understand the relationship of how the phonebase, the phone, the site and the user's role fit together in setting up the phone.  The diagram below illustrates this relationship.
 
-![User Provisioning Module 4 Phone Creation Process]("resources/images/mod_4_2_phone_creation_process.png")
+![User Provisioning Module 4 Phone Creation Process](resources/images/mod_4_2_phone_creation_process.png)
 
-1. **A phone created from a phonebase**.  So in our case we are creating a phone using the WebRTC phonebase that is setup for every Genesys Cloud organization.  Remember, a phonebase is a template containing the configuration for that particular style of phone.  Once the phone is created, the settings for that individual phone can be changed without changing the template.
+1. **A phone created from a phonebase**.  We are creating a phone using the WebRTC phonebase that is available for every Genesys Cloud organization.  Remember, a phonebase is a template containing the configuration for that particular style of phone.  Once the phone is created, the settings for that individual phone can be changed without changing the template.
 
 2. **A phone is assigned a site.** Phones are assigned to site within Genesys Cloud when the phone is created. A site represents a geographic location.
 
-3. **A user is assigned a phone as their default station**.  Once a phone is created, it assigned to a user a default station.  A user can have multiple stations with a different phone assigned to each station, but the user will have one of those stations assigned as a default station.
+3. **A user is assigned a phone as their default station**.  Once a phone is created, before it can be usable, it must be assigned to a user's as the user's default station.  A user can have multiple stations with a different phone assigned to each station, but the user will have one of those stations assigned as a default station.
 
-4. **In order for a user to be able to use a phone to make and receive calls, they must have a role with the the proper permissions.**  Not all users can make and receive phone calls with a phone.  They must have a role assigned to them that has the proper permissions.  For this developer starting guide, we have assigned all of our users the `Communicate` role.
+4. **In order for a user to be able to use a phone to make and receive calls, they must have a role with the the proper permissions.**  Not all users can make and receive phone calls in Genesys Cloud.  In order to make a call with a phone, they must have a role assigned to them that has the proper permissions.  For this developer starting guide, we have assigned all of our users the `Communicate` role.
 
-Let's begin our discussion by revisiting where we initiate the creation of a users's phone in our user provisioning script.  If you remember all the the processing done after the created is done in the `postUserCreation()` function in the `src/provisioning.js` file.
+Let's begin our discussion by revisiting where we initiate the creation of a users's phone in our user provisioning script.  If you remember all the the processing done after the users are created is done in the `postUserCreation()` function in the `src/provisioning.js` file.
 
 ```javascript
 async function postUserCreation(users) {
@@ -36,7 +36,7 @@ async function postUserCreation(users) {
 }
 ```
 
-The last line of this function, iterates over all of the created users and uses two function to create the users WebRTC phone and then assigning the phone to the user: `phoneApiProxy.createWebRTCPhone()` and `stationsApiProxy.assignUserToWebRtcPhone()`.  
+The last line of this function, iterates over all of the created users and uses two function to create the users WebRTC phone and then assign the phone to the user: `phoneApiProxy.createWebRTCPhone()` and `stationsApiProxy.assignUserToWebRtcPhone()`.  
 
 # Create the Web RTC Phone 
 The `createWebRTCPhone()` function is located in the `src/proxies/phoneapi.js` file.  To create the phone we are going to use the `TelephonyProvidersEdgeApi` api. [1] The code for `createWebRTCPhone()` function is shown below.
@@ -111,7 +111,8 @@ The actual call to create the phone is trivial and uses the ` apiInstance.postTe
     return null;
   }
   ```
-However, the real challenge in creating a WebRTC phone is that the same API  `postTelephonyProvidersEdgesPhones()` is used to create not only WebRTC phones, but physical phones.  Since there is a massive amount of information that can be passed in creating the phone, JSON object passed into the `postTelephonyProvidersEdgesPhones()` call is extremely large and its API documentation is not clear.  So, in setting up a WebRTC phone you really need to make sure (per the example above) that you properly set the following fields on the payload:
+
+However, the real challenge in creating a WebRTC phone is that the same API  `postTelephonyProvidersEdgesPhones()` is used to create not only WebRTC phones, but physical phones.  Since there is a massive amount of information that can be passed in creating the phone, JSON object passed into the `postTelephonyProvidersEdgesPhones()` call is extremely large and its API documentation is not clear.  So, in setting up a WebRTC phone you need to make sure (per the example above) that you properly set the following fields on the payload:
 
 1. **name**.  This is the name of the phone.  This has to be a unique name and should be descriptive of who is going to own the phone.
 2. **site**.  These values are derived directly from the site object we looked up earlier in the code.

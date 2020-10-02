@@ -1,11 +1,11 @@
 In this module we are going to cover the second part of user-provisioning process: user creation.
 
-![User Provisioning Module 2 Architecture diagram]("resources/images/mod_2_1_user_provisioning_arch_overview.png")
+![User Provisioning Module 2 Architecture diagram](resources/images/mod_2_1_user_provisioning_arch_overview.png)
 
 For the provisioning script in this developer starting guide, we need to take 3 actions to create a user.
 The diagram below illustrates these 3 steps.
 
-![User Provisioning Module 2 Creating the user diagram]("resources/images/mod_2_2_parsing_user_creation_process.png")
+![User Provisioning Module 2 Creating the user diagram](resources/images/mod_2_2_parsing_user_creation_process.png)
 
 1.  **Parse the user records out of a CSV file**. This is going to involve very little code as we will be using the `csv-parser` [1] library to parse our CSV file containing the user data.
 
@@ -433,8 +433,8 @@ This module covered the tasks involved with creating a user in Genesys Cloud.  S
 # References
 
 1. [csv-parser library](https://www.npmjs.com/package/csv-parser)
-2. [Genesys Cloud User API Docs](https://developer.mypurecloud.com/api/rest/v2/users/)
-3. [Genesys Cloud Groups API Docs](https://developer.mypurecloud.com/api/rest/v2/groups/)
-4. [Genesys Cloud API Rate Limits](https://developer.mypurecloud.com/api/rest/rate_limits.html)
-5. [Genesys Cloud API Fair Usage Policies](https://help.mypurecloud.com/articles/api-overage-charge/)
-6. [Genesys Cloud Sites API Docs](https://developer.mypurecloud.com/api/rest/v2/sites/)
+2. [Genesys Cloud User API Docs](/api/rest/v2/users/)
+3. [Genesys Cloud Groups API Docs](/api/rest/v2/groups/)
+4. [Genesys Cloud API Rate Limits](/api/rest/rate_limits.html)
+5. [Genesys Cloud API Fair Usage Policies](/articles/api-overage-charge/)
+6. [Genesys Cloud Sites API Docs](/api/rest/v2/sites/)

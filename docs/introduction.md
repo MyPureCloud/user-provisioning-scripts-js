@@ -18,7 +18,7 @@ In addition, to the mechanics involved with calling the API, this developer guid
 
 To demonstrate how to provision and manage users, we are going to create a user provisioning script that will create a user, assign them to a chat group, assign them to a role and then create a WebRTC phone for them. The diagram below highlights the general flow of this script along with the APIs it is calling.
 
-![User Provisioning Architecture diagram]("mod_0_0_user_provisioning_arch_overview.png")
+![User Provisioning Architecture diagram](resources/images/mod_0_0_user_provisioning_arch_overview.png)
 
 This diagram is meant to be a general map of the process and will be used throughout the developer guide. If we take a look at diagram above, everything starts with a CSV file full of user data. That file will be read by the `src/user-provisioning.js` file and launch the process of creating a user, assigning them a group and a role, and then creating a WebRTC phone for the user.
 
@@ -93,4 +93,4 @@ All of the code for this project is logged under the `src` directory. All unit t
 # Additional Material
 
 1. Creating an [OAuth Client Credential Grant](https://help.mypurecloud.com/articles/create-an-oauth-client/)
-2. Genesys [JavaScript SDK](https://developer.mypurecloud.com/api/rest/client-libraries/javascript/)
+2. Genesys [JavaScript SDK](/api/rest/client-libraries/javascript/)
