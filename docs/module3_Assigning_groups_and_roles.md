@@ -1,5 +1,3 @@
-# Overview
-
 In this module we are going to assign our created users the group and roles defined within our CSV file.  These two steps are shown below in the architectural diagram for this developer starting guide.
 
 ![User Provisioning Module 3 Architecture diagram]("resources/images/mod_3_1_user_provisioning_arch_overview.png")

@@ -19,7 +19,7 @@ async function getStationByWebRtcUserId(userId) {
         const stations = await apiInstance.getStations(opts);
         /*If we cant find a station then throw an exception.  This will trigger a retry*/
         if (stations.entities.length === 0) {
-          throw 'No station found, retrying';
+          throw new Error('No station found, retrying');
         }
 
         return stations;
@@ -50,10 +50,10 @@ async function getStationByWebRtcUserId(userId) {
 */
 async function assignUserToWebRtcPhone(userId) {
   try {
-    let apiInstance = new platformClient.UsersApi();
-
     /*Get the station*/
     const station = await getStationByWebRtcUserId(userId);
+
+    let apiInstance = new platformClient.UsersApi();
 
     /*Assign the station*/
     await apiInstance.putUserStationDefaultstationStationId(userId, station.id);

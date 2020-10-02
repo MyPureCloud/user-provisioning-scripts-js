@@ -87,7 +87,7 @@ async function postUserCreation(users) {
   the user. 
 
   The code is going to use a scatter/pattern.  As each CSV record is read via a stream,
-  it will call create the user.  After each CREATE API is called, it will push a promise into the
+  it will call create the user.  After each createUser function is called, it will push a promise into the
   the resultsPromise array.  Then, once the file is completely process, the code will WAIT for all promises to resolve.
 */
 async function createUsers(filename) {
