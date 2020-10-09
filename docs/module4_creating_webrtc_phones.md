@@ -9,7 +9,7 @@ This is the last module in this developer starting guide.  At this point we have
 
 We are now going to show you how to create a WebRTC phone for a user and assign it to the user as a default station.  We are at this point in our architectural diagram we have been using for this tutorial.
 
-![User Provisioning Module 4 Architecture diagram](resources/images/mod_4_1_user_provisioning_arch_overview.png)
+![User Provisioning Module 4 Architecture Diagram](resources/images/mod_4_1_user_provisioning_arch_overview.png)
 
 Before we begin looking at the code to create a WebRTC phone and assign it to a user, we need to understand the relationship of how the phonebase, the phone, the site and the user's role fit together in setting up the phone.  The diagram below illustrates this relationship.
 
