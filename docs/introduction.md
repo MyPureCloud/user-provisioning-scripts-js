@@ -7,7 +7,7 @@ Welcome to the Genesys CloudUser Provisioning developer starting guide. Our goal
 3. Assign the created user a chat group and a security role.
 4. Create a WebRTC phone that will allow the created user account to make outbound calls.
 
-In addition, to the mechanics involved with calling the API, this developer guide will walk through common development tasks you must think of when working with the Genesys Cloud APIs, including:
+In addition to the mechanics involved with calling the API, this developer guide will walk through common development tasks you must think of when working with the Genesys Cloud APIs, including:
 
 1.  API rate limiting
 2.  API fair usage policies

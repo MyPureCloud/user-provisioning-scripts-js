@@ -18,6 +18,7 @@
     "csv-parser": "^2.3.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "mdpdf": "^2.1.2",
     "purecloud-platform-client-v2": "^87.0.0",
     "uuid": "^8.3.0"
   },

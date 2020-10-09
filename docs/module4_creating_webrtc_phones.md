@@ -19,7 +19,7 @@ Before we begin looking at the code to create a WebRTC phone and assign it to a 
 
 2. **A phone is assigned a site.** Phones are assigned to site within Genesys Cloud when the phone is created. A site represents a geographic location.
 
-3. **A user is assigned a phone as their default station**.  Once a phone is created, before it can be usable, it must be assigned to a user's as the user's default station.  A user can have multiple stations with a different phone assigned to each station, but the user will have one of those stations assigned as a default station.
+3. **A user is assigned a phone as their default station**.  Once a phone is created, before it can be used, the user has to be logged into the phone.  Logging into the phone can be done manually by the user, but if the phone is defined as the user's default station, the user will automatically be logged into the phone the first time the user logs into their account.
 
 4. **In order for a user to be able to use a phone to make and receive calls, they must have a role with the the proper permissions.**  Not all users can make and receive phone calls in Genesys Cloud.  In order to make a call with a phone, they must have a role assigned to them that has the proper permissions.  For this developer starting guide, we have assigned all of our users the `Communicate` role.
 
@@ -118,7 +118,7 @@ However, the real challenge in creating a WebRTC phone is that the same API  `po
 2. **site**.  These values are derived directly from the site object we looked up earlier in the code.
 3. **phoneBaseSettings**.  These values are created from the phoneBase object we looked up earlier in the code.
 4. **lineBaseSettings**.  These are created from the phoneBase object we looked at up earlier in the code.
-5. **webRtcUser**.  Used to uniquely represent the user of the phone in the WebRTC protocol.  This needs to be a unique name and the user id is used to populate this value.
+5. **webRtcUser**.  Used to uniquely represent the user of the phone in the WebRTC protocol.  This needs to be a unique name and the user id is used to populate this value.  When you create the phone and set the webRtcUser field, that WebRTC phone will only ever be available to that user.
 
 All of the other parameters in the above code can be passed in as is. At this point, this code will have successfully created a WebRTC phone, but it is not yet available for the user to use.
 
@@ -233,7 +233,7 @@ With our last call our work in this developer starting guide is complete.  So ho
 In this final module you used the Genesys Cloud API to:
 
 1. Create a WebRTC Phone for an user.
-2. Lookup the underlying station for that user and deal with the eventual consistency desing of the API.
+2. Lookup the underlying station for that user and deal with the eventual consistency design of the API.
 3. Assign the WebRTC Phone to the User.
 
 # Reference

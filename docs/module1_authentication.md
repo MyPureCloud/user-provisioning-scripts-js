@@ -6,9 +6,14 @@ In terms of the overall architecture, the diagram below will show the specific p
 
 ## Authenticating with the Genesys Cloud
 
-Genesys Cloud uses the OAuth2 2.0 specification [2] to handle all authentication requests coming from a third-party application or services. For the user provisioning script, we will be using an OAuth 2.0 client credential grant. The OAuth 2.0 credential grant is the appropriate form of authentication to use when using an application, script or service needs to communicate with Genesys Cloud as non-user. Typically credential grants are used when building integrations from a third-party application or service to Genesys Cloud. The diagram below illustrates how an OAuth 2.0 client credential grant occurs between a service and Genesys Cloud.
+Genesys Cloud uses the OAuth2 2.0 specification [2] to handle all authentication requests coming from a third-party application or services. For the user provisioning script, we will be using an OAuth 2.0 client credential grant. The OAuth 2.0 credential grant is the appropriate form of authentication to use when using an application, script or service needs to communicate with Genesys Cloud as non-user. Typically credential grants are used when building integrations from a third-party application or service to Genesys Cloud. 
 
-![User Provisioning Module 1 diagram]("resources/images/mod_1_2_user_provisioning_oauth_client_credential_grant.png")
+##CALLOUT //TODO Replace with call out markup
+It is extremely tempting to use the client credential grant for most of your integrations.  However, the client credential grant is specifically designed for headless applications (e.g scripts and backend processing).  However, if you are going to have an end-user calling your service via a web or mobile application and the service calls Genesys Cloud APIs, you should use the OAuth 2.0 Authorization Code grant type.  Many Genesys Cloud APIs require that you use the Authorization Code grant because they require the user context to function.  For additional material, on using the Authorization code grant type see Genesys Cloud's Authorization Code Grant page. [3] 
+
+The diagram below illustrates how an OAuth 2.0 client credential grant occurs between a service and Genesys Cloud.
+
+![User Provisioning Module 1 diagram](resources/images/mod_1_2_user_provisioning_oauth_client_credential_grant.png)
 
 You can see from the diagram above, that using an OAuth 2.0 credential grant requires 5 steps:
 
@@ -85,7 +90,7 @@ There are three keys things to takeaway from the code above. First, in order to 
 const platformClient = require('purecloud-platform-client-v2');
 ```
 
-Second, we need to retrieve an instance of the class in the Genesys Cloud Javascript SDK we are going to use. The Genesys Cloud API is grouped into classes based on their functionality and mirrors how the Genesys Cloud REST APIs are organized. You can see this organization of REST APIs in the Developer Center API documents [3] or via the Developer Tools API explorer [4].
+Second, we need to retrieve an instance of the class in the Genesys Cloud Javascript SDK we are going to use. The Genesys Cloud API is grouped into classes based on their functionality and mirrors how the Genesys Cloud REST APIs are organized. You can see this organization of REST APIs in the Developer Center API documents [4] or via the Developer Tools API explorer [5].
 
 In the `authenticate()` method we need to retrieve an instance of the `ApiClient`.
 
@@ -136,7 +141,7 @@ If the script is acting abusively or causing a performance issue within Genesys 
 3. **Provide a clear, descriptive name and description for your OAuth client**. In the event there is an incident with a script, the Genesys Cloud on-call support engineers will look at your OAuth client's name and description to help ascertain the risks of shutting down your client.
 4. **Do not over-privilege your OAuth client**. While an OAuth token will expire, if the OAuth token is hijacked or compromised, and the OAuth client that issues the token has more privileges then it needs, this will cause an unnecessary risk to your Genesys Cloud account and the data in it.
 5. **Be aggressive with your token time-outs**. While you can set your tokens to timeout for up to 24 hours, this can increase the surface an attacker has to (ab)use a token before it expires.
-6. **Do not setup multiple OAuth Clients to sidestep Genesys Cloud rate-limits**. OAuth Clients have a rate limit of 300 requests per minute. [5] Do not attempt to setup multiple OAuth Clients that your application uses to side step. This is considered abusive behavior and may result in all of your OAuth Clients credentials revoked.
+6. **Do not setup multiple OAuth Clients to sidestep Genesys Cloud rate-limits**. OAuth Clients have a rate limit of 300 requests per minute. [6] Do not attempt to setup multiple OAuth Clients that your application uses to side step. This is considered abusive behavior and may result in all of your OAuth Clients credentials revoked.
 
 # Summary
 
@@ -153,6 +158,7 @@ In the next module, we will review how we will parse the CSV file containing the
 
 1. [Genesys Cloud JavaScript API](/api/rest/client-libraries/javascript/)
 2. [OAuth 2 Overview](/api/rest/authorization/index.html#access_tokens)
-3. [Developer Center API Guide](/api/rest/v2/)
-4. [API Explorer](/developer-tools/#/api-explorer)
-5. [API Rate Limits](/api/rest/tips/#api_rate_limiting)
+3. [OAuth 2 Authorization Code Overview](/api/rest/authorization/use-authorization-code.html)
+4. [Developer Center API Guide](/api/rest/v2/)
+5. [API Explorer](/developer-tools/#/api-explorer)
+6. [API Rate Limits](/api/rest/tips/#api_rate_limiting)

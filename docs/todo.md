@@ -1,1 +1,0 @@
-- Dockerize the app so that it can be run inside of docker.
