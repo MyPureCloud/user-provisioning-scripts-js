@@ -33,7 +33,6 @@ All of the code for this project is logged under the src tree. All unit tests ar
 
 ```
     data/                   <= Contains a single csv file mapping out the user fields to map
-    docs/                   <= The tutorial documents that will be rendered on our developer center.
     src/
       index.js              <= The starting point for launching the process.
       provisiong.js         <= The "business logic" that carries out the overall process
