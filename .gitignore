@@ -1,0 +1,8 @@
+.env
+.DS_Store
+.vscode/
+.devcontainer/
+node_modules/
+coverage/
+dist/
+launch.json
