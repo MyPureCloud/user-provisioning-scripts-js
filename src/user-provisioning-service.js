@@ -11,7 +11,10 @@ const port = 3000;
 dotenv.config();
 const filename = process.argv[2];
 
-const response = await authApiProxy.authenticate(process.env.GENESYS_CLIENT_ID, process.env.GENESYS_CLIENT_SECRET);
+const response = await authApiProxy.authenticate(
+                          process.env.GENESYS_CLIENT_ID, 
+                          process.env.GENESYS_CLIENT_SECRET,
+                          process.env.GENESYS_ORG_REGION);
 
 console.log(`token: ${JSON.stringify(response, null, 4)}`)
 app.use(bodyParser.urlencoded({ extended: false }));
