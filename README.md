@@ -17,15 +17,36 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
 
 4. Set the following environment variables:
 
-   - GENESYS_CLIENT_ID=<<YOUR CLIENT ID>>
-   - GENESYS_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
+   - GENESYS_CLIENT_ID=`<<YOUR CLIENT ID>>`
+   - GENESYS_CLIENT_SECRET=`<<YOUR CLIENT SECRET>>`
+   - GENESYS_ORG_REGION=`<<YOUR GENESYS CLOUD ORG REGION>>`
 
-   **Note**: You can also set the above environment variables in .env file.
+   **Notes**:
+   - The GENESYS_ORG_REGION is the AWS Region where your Genesys Cloud org is hosted (eg. us-east-1). For more info on the regions and how to identify them, consult the [Platform API](https://developer.mypurecloud.com/api/rest/#authentication) page.
+   - You can also set the above environment variables in .env file.
 
 5. To run the test cases, you can run: `npm run test`
-6. To run the actual code, you can change to the src directory and run: `node index.js ../data/userdata.csv`
+6. To run the actual code, you can change to the src directory and run: `node user-provisioning.js ../data/userdata.csv`
 
-   **Note**: This code will create the users against your organization, assign them to a group and a role so please be aware of this and be careful. This code is a tutorial for how to provision users. It has minimal error handling and no rollback logic if something goes wrong.
+   **Notes**:
+   - This code creates a user in your actual organization and assigns the user to a group and a role. Be aware that this tutorial code shows how to provision users in your own environment. It has minimal error handling and no rollback logic if something goes wrong.
+   - As an alternative, the `user-provisioning-service.js` script enables you to run the create user code as a REST-based service. See Step 7, below, for instructions.
+
+7. To use the alternative `user-provisioning-service.js` script, which enables you to run the script's create-user code as a REST-based service, use the following procedure:
+  a. Change to the `src` directory and then run `node user-provisioning-service.js.`
+  b. After the service is started, send a `POST http://localhost:3000/user` request. The request body for the service call is shown below:
+
+```json
+{
+  "NAME": "value",
+  "EMAIL": "value",
+  "PASSWORD": "value",
+  "GROUP": "value",
+  "ROLE": "value",
+  "SITENAME": "value",
+  "PHONEBASE": "value"
+}
+```
 
 ## Code Organization
 
