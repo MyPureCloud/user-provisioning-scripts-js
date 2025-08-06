@@ -30,6 +30,7 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
 
    **Notes**:
    - This code creates a user in your actual organization and assigns the user to a group and a role. Be aware that this tutorial code shows how to provision users in your own environment. It has minimal error handling and no rollback logic if something goes wrong.
+   - Ensure that the role, group, site name, and phone base that you will assign to users already exists in your Genesys organization. This script does not create any new role, group, site name, and phone base.
    - As an alternative, the `user-provisioning-service.js` script enables you to run the create user code as a REST-based service. See Step 7, below, for instructions.
 
 7. To use the alternative `user-provisioning-service.js` script, which enables you to run the script's create-user code as a REST-based service, use the following procedure:
@@ -38,13 +39,13 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
 
 ```json
 {
-  "NAME": "value",
-  "EMAIL": "value",
-  "PASSWORD": "value",
-  "GROUP": "value",
-  "ROLE": "value",
-  "SITENAME": "value",
-  "PHONEBASE": "value"
+  "name": "value",
+  "email": "value",
+  "password": "value",
+  "group": "value",
+  "role": "value",
+  "sitename": "value",
+  "phonebase": "value"
 }
 ```
 
@@ -52,7 +53,7 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
 
 All of the code for this project is logged under the src tree. All unit tests are located under the test directory.
 
-```
+```text
     data/                   <= Contains a single csv file mapping out the user fields to map
     src/
       index.js              <= The starting point for launching the process.

@@ -1,21 +1,20 @@
-const csv = require('csv-parser');
-const fs = require('fs');
+import csv from "csv-parser";
+import fs from "fs";
 
-const platformClient = require('purecloud-platform-client-v2');
-const groupsApiProxy = require('./proxies/groupsapi');
-const usersApiProxy = require('./proxies/usersapi');
-const sitesApiProxy = require('./proxies/sitesapi');
-const phoneBaseApiProxy = require('./proxies/phonebaseapi');
-const phoneApiProxy = require('./proxies/phoneapi');
-const rolesApiProxy = require('./proxies/rolesapi');
-const stationsApiProxy = require('./proxies/stationsapi');
+import * as groupsApiProxy from "./proxies/groupsapi.js";
+import * as usersApiProxy from "./proxies/usersapi.js";
+import * as sitesApiProxy from "./proxies/sitesapi.js";
+import * as phoneBaseApiProxy from "./proxies/phonebaseapi.js";
+import * as phoneApiProxy from "./proxies/phoneapi.js";
+import * as rolesApiProxy from "./proxies/rolesapi.js";
+import * as stationsApiProxy from "./proxies/stationsapi.js";
 
 /**
  * Takes a list of users (sourced from a csv file) and assigns them to a chat group
- * @param {*} users 
+ * @param {*} users
  */
 async function assignUsersToGroups(users) {
-  for (groupId of groupsApiProxy.getGroupIds()) {
+  for (const groupId of groupsApiProxy.getGroupIds()) {
     const userIdsInGroup = users
       .filter((user) => groupId === user.group.id)
       .map((user) => user.id);
@@ -28,11 +27,11 @@ async function assignUsersToGroups(users) {
       }
     }
   }
-};
+}
 
 /*Takes a list of users (sourced from a csv file) and assigns them a role*/
 async function assignUsersToRoles(users) {
-  for (roleId of rolesApiProxy.getRoleIds()) {
+  for (const roleId of rolesApiProxy.getRoleIds()) {
     const userIdsInRole = users
       .filter((user) => roleId === user.role.id)
       .map((user) => user.id);
@@ -45,13 +44,12 @@ async function assignUsersToRoles(users) {
       }
     }
   }
-};
-
+}
 
 /**
- * Creates an indivdiual user in Genesys Cloud and then looks up additional information 
+ * Creates an indivdiual user in Genesys Cloud and then looks up additional information
  * for the user.  (e.g. group, site, role and phonebase)
- * @param {*} user 
+ * @param {*} user
  */
 async function createUser(user) {
   const createdUser = await usersApiProxy.createUser(user);
@@ -66,7 +64,7 @@ async function createUser(user) {
 
 /**
  * Takes a list of users from the createUser() function and assigns the users to a group, a role and a site.
- * @param {*} users 
+ * @param {*} users
  */
 async function postUserCreation(users) {
   console.log(`Assigning users to groups`);
@@ -76,10 +74,11 @@ async function postUserCreation(users) {
   await assignUsersToRoles(users);
 
   console.log(`Creating phones for users`);
-  for (user of users) {
+  for (const user of users) {
     await phoneApiProxy.createWebRTCPhone(user);
     await stationsApiProxy.assignUserToWebRtcPhone(user.id);
   }
+  console.log(`User creation complete`);
 }
 
 /*
@@ -93,13 +92,13 @@ async function postUserCreation(users) {
 async function createUsers(filename) {
   let resultPromises = [];
 
-  console.log('Beginning user creation');
+  console.log("Beginning user creation");
   fs.createReadStream(filename)
     .pipe(csv())
-    .on('data', async (user) => {
-      resultPromises.push(createUser(user))
+    .on("data", async (user) => {
+      resultPromises.push(createUser(user));
     })
-    .on('end', async () => {
+    .on("end", async () => {
       const users = await Promise.all(resultPromises); //We wait for all of the promises to resolve
       await postUserCreation(users);
     });
@@ -108,7 +107,7 @@ async function createUsers(filename) {
 /**
  * Called from the Express web service. This function will create a single user and assign them
  * to a group, role and then create a webrtc phone for them.
- * @param {*} userRequest 
+ * @param {*} userRequest
  */
 async function createUsersService(userRequest) {
   const user = {
@@ -122,18 +121,21 @@ async function createUsersService(userRequest) {
   };
 
   try {
-    console.log(`Creating a user`);
+    console.log(`Creating a user: ${JSON.stringify(user, null, 4)}`);
     const userResults = await createUser(user);
 
-    const users = [user];
-    await postUserCreation(user);
+    const users = [userResults];
+    console.log(`User created: ${JSON.stringify(userResults, null, 4)}`);
+    await postUserCreation(users);
   } catch (e) {
     console.error(e);
   }
-};
+}
 
-exports.createUser = createUser;
-exports.createUsers = createUsers;
-exports.createUsersService = createUsersService;
-exports.assignUsersToGroups = assignUsersToGroups;
-exports.assignUsersToRoles = assignUsersToRoles;
+export {
+  createUser,
+  createUsers,
+  createUsersService,
+  assignUsersToGroups,
+  assignUsersToRoles,
+};

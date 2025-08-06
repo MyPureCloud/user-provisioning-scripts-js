@@ -1,4 +1,4 @@
-const platformClient = require('purecloud-platform-client-v2');
+import platformClient from 'purecloud-platform-client-v2';
 
 let phoneBasesMap = {};
 
@@ -38,4 +38,4 @@ async function getPhoneBaseByName(phoneBaseName) {
   return { ...phoneBasesMap[phoneBaseName] }
 };
 
-exports.getPhoneBaseByName = getPhoneBaseByName;
+export { getPhoneBaseByName };

@@ -1,4 +1,4 @@
-const platformClient = require('purecloud-platform-client-v2');
+import platformClient from 'purecloud-platform-client-v2';
 
 const sitesMap = {};
 
@@ -39,4 +39,4 @@ async function getSiteByName(siteName) {
 };
 
 
-exports.getSiteByName = getSiteByName;
+export { getSiteByName };

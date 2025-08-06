@@ -1,4 +1,4 @@
-const platformClient = require('purecloud-platform-client-v2');
+import platformClient from 'purecloud-platform-client-v2';
 
 async function createWebRTCPhone(user) {
   let apiInstance = new platformClient.TelephonyProvidersEdgeApi();
@@ -58,4 +58,4 @@ async function createWebRTCPhone(user) {
   }
 };
 
-exports.createWebRTCPhone = createWebRTCPhone;
+export { createWebRTCPhone };

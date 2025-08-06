@@ -1,8 +1,9 @@
-const groupsapi = require('../../../src/proxies/groupsapi');
-const { v4: uuidv4 } = require('uuid');
-const { GroupsApi } = require('purecloud-platform-client-v2');
-
 jest.mock('purecloud-platform-client-v2');
+
+import * as groupsapi from '../../../src/proxies/groupsapi.js';
+import { v4 as uuidv4 } from 'uuid';
+import platformClient from 'purecloud-platform-client-v2';
+const { GroupsApi } = platformClient;
 
 const buildMultiGroupMock = (groups, pageCount) => {
   return {
