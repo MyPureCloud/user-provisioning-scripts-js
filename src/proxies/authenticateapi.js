@@ -1,4 +1,4 @@
-const platformClient = require('purecloud-platform-client-v2');
+import platformClient from 'purecloud-platform-client-v2';
 
 /*
    The authenticate function is going to take the OAuth client id and secret and get a OAuth client credential token
@@ -18,4 +18,5 @@ async function authenticate(clientId, clientSecret, orgRegion) {
   }
 };
 
-exports.authenticate = authenticate;
+export { authenticate };
+export default { authenticate };

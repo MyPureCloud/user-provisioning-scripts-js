@@ -1,16 +1,16 @@
-const { v4: uuidv4 } = require('uuid');
-const provision = require('../../src/provision');
-const groupsApiProxy = require('../../src/proxies/groupsapi');
-const rolesApiProxy = require('../../src/proxies/rolesapi');
-const usersApiProxy = require('../../src/proxies/usersapi');
-const phonebaseApiProxy = require('../../src/proxies/phonebaseapi');
-const sitesApiProxy = require('../../src/proxies/sitesapi');
+jest.mock("../../src/proxies/groupsapi.js");
+jest.mock("../../src/proxies/rolesapi.js");
+jest.mock("../../src/proxies/usersapi.js");
+jest.mock("../../src/proxies/phonebaseapi.js");
+jest.mock("../../src/proxies/sitesapi.js");
 
-jest.mock('../../src/proxies/groupsapi');
-jest.mock('../../src/proxies/rolesapi');
-jest.mock('../../src/proxies/usersapi');
-jest.mock('../../src/proxies/phonebaseapi');
-jest.mock('../../src/proxies/sitesapi');
+import { v4 as uuidv4 } from "uuid";
+import * as provision from "../../src/provision.js";
+import * as groupsApiProxy from "../../src/proxies/groupsapi.js";
+import * as rolesApiProxy from "../../src/proxies/rolesapi.js";
+import * as usersApiProxy from "../../src/proxies/usersapi.js";
+import * as phonebaseApiProxy from "../../src/proxies/phonebaseapi.js";
+import * as sitesApiProxy from "../../src/proxies/sitesapi.js";
 
 beforeEach(() => {
   // Clear all instances and calls to constructor and all methods:
@@ -26,8 +26,8 @@ beforeEach(() => {
   sitesApiProxy.getSiteByName.mockClear();
 });
 
-describe('When processing user records: ', () => {
-  test('When a call to createUser() is made, the user will created and then group, site, role, and phonebase info will be added to the user record', async () => {
+describe("When processing user records: ", () => {
+  test("When a call to createUser() is made, the user will created and then group, site, role, and phonebase info will be added to the user record", async () => {
     const mockCreateUserId = uuidv4();
     const mockGroupId = uuidv4();
     const mockSiteId = uuidv4();
@@ -35,38 +35,48 @@ describe('When processing user records: ', () => {
     const mockPhoneBaseId = uuidv4();
 
     usersApiProxy.createUser = jest.fn(async (user) => {
-      return new Promise((resolve) => resolve({
-        id: mockCreateUserId,
-        name: user.NAME
-      }))
+      return new Promise((resolve) =>
+        resolve({
+          id: mockCreateUserId,
+          name: user.NAME,
+        })
+      );
     });
 
     groupsApiProxy.getGroupByName = jest.fn(async (groupName) => {
-      return new Promise((resolve) => resolve({
-        id: mockGroupId,
-        name: groupName
-      }))
+      return new Promise((resolve) =>
+        resolve({
+          id: mockGroupId,
+          name: groupName,
+        })
+      );
     });
 
     sitesApiProxy.getSiteByName = jest.fn(async (siteName) => {
-      return new Promise((resolve) => resolve({
-        id: mockSiteId,
-        name: siteName
-      }))
+      return new Promise((resolve) =>
+        resolve({
+          id: mockSiteId,
+          name: siteName,
+        })
+      );
     });
 
     rolesApiProxy.getRoleByName = jest.fn(async (roleName) => {
-      return new Promise((resolve) => resolve({
-        id: mockRoleId,
-        name: roleName
-      }))
+      return new Promise((resolve) =>
+        resolve({
+          id: mockRoleId,
+          name: roleName,
+        })
+      );
     });
 
     phonebaseApiProxy.getPhoneBaseByName = jest.fn(async (phoneBaseName) => {
-      return new Promise((resolve) => resolve({
-        id: mockPhoneBaseId,
-        name: phoneBaseName
-      }))
+      return new Promise((resolve) =>
+        resolve({
+          id: mockPhoneBaseId,
+          name: phoneBaseName,
+        })
+      );
     });
 
     const userInput = {
@@ -74,8 +84,8 @@ describe('When processing user records: ', () => {
       GROUP: "Annuities",
       SITENAME: "North America",
       ROLE: "Communicate",
-      PHONEBASE: "WebRtc Phone"
-    }
+      PHONEBASE: "WebRtc Phone",
+    };
 
     const userOutputs = await provision.createUser(userInput);
     expect(usersApiProxy.createUser).toHaveBeenCalledTimes(1);
@@ -95,10 +105,9 @@ describe('When processing user records: ', () => {
     expect(userOutputs.SITENAME).toBe(userInput.SITENAME);
     expect(userOutputs.ROLE).toBe(userInput.ROLE);
     expect(userOutputs.PHONEBASE).toBe(userInput.PHONEBASE);
-
   });
 
-  test('When users are added to a group the users are sorted and placed into the correct group', async () => {
+  test("When users are added to a group the users are sorted and placed into the correct group", async () => {
     const groupId1 = uuidv4();
     const groupId2 = uuidv4();
     const mockGroupIds = [groupId1, groupId2];
@@ -107,9 +116,9 @@ describe('When processing user records: ', () => {
     const userId3 = uuidv4();
 
     const mockUsersFromFile = [
-      { name: 'Clark Kent', id: userId1, group: { id: groupId1 } },
-      { name: 'Lois Lane', id: userId2, group: { id: groupId1 } },
-      { name: 'Jimmy Olson', id: userId3, group: { id: groupId2 } },
+      { name: "Clark Kent", id: userId1, group: { id: groupId1 } },
+      { name: "Lois Lane", id: userId2, group: { id: groupId1 } },
+      { name: "Jimmy Olson", id: userId3, group: { id: groupId2 } },
     ];
 
     groupsApiProxy.getGroupIds = jest.fn(() => {
@@ -138,7 +147,7 @@ describe('When processing user records: ', () => {
     expect(groupsApiProxy.addUsersToAGroup).toHaveBeenCalledTimes(2);
   });
 
-  test('When users are added to a role the users are sorted and placed in the correct role', async () => {
+  test("When users are added to a role the users are sorted and placed in the correct role", async () => {
     const roleId1 = uuidv4();
     const roleId2 = uuidv4();
     const mockRoleIds = [roleId1, roleId2];
@@ -147,9 +156,9 @@ describe('When processing user records: ', () => {
     const userId3 = uuidv4();
 
     const mockUsersFromFile = [
-      { name: 'Clark Kent', id: userId1, role: { id: roleId1 } },
-      { name: 'Lois Lane', id: userId2, role: { id: roleId1 } },
-      { name: 'Jimmy Olson', id: userId3, role: { id: roleId2 } },
+      { name: "Clark Kent", id: userId1, role: { id: roleId1 } },
+      { name: "Lois Lane", id: userId2, role: { id: roleId1 } },
+      { name: "Jimmy Olson", id: userId3, role: { id: roleId2 } },
     ];
 
     rolesApiProxy.getRoleIds = jest.fn(() => {

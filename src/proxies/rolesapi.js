@@ -1,4 +1,4 @@
-const platformClient = require('purecloud-platform-client-v2');
+import platformClient from 'purecloud-platform-client-v2';
 
 let rolesMap = {};
 
@@ -53,6 +53,4 @@ async function addUsersToARole(roleId, userIds) {
   }
 };
 
-exports.getRoleIds = getRoleIds;
-exports.getRoleByName = getRoleByName;
-exports.addUsersToARole = addUsersToARole;
+export { getRoleIds, getRoleByName, addUsersToARole };

@@ -1,8 +1,9 @@
-const phonebaseapi = require('../../../src/proxies/phonebaseapi');
-const { v4: uuidv4 } = require('uuid');
-const { TelephonyProvidersEdgeApi } = require('purecloud-platform-client-v2');
+jest.mock("purecloud-platform-client-v2");
 
-jest.mock('purecloud-platform-client-v2');
+import * as phonebaseapi from "../../../src/proxies/phonebaseapi.js";
+import { v4 as uuidv4 } from "uuid";
+import platformClient from "purecloud-platform-client-v2";
+const { TelephonyProvidersEdgeApi } = platformClient;
 
 const buildPhoneBaseMock = (phoneBase) => {
   return {
@@ -10,23 +11,23 @@ const buildPhoneBaseMock = (phoneBase) => {
       {
         id: phoneBase.id,
         name: phoneBase.name,
-        state: 'active',
+        state: "active",
         phoneMetaBase: {
-          id: 'inin_webrtc_softphone.json',
-          name: 'PureCloud WebRTC Phone',
+          id: "inin_webrtc_softphone.json",
+          name: "PureCloud WebRTC Phone",
         },
         lines: [
           {
-            id: 'c0e1873d-1f9e-4158-8662-cf8c8849a621',
-            state: 'active',
+            id: "c0e1873d-1f9e-4158-8662-cf8c8849a621",
+            state: "active",
             selfUri:
-              '/api/v2/telephony/providers/edges/linebasesettings/c0e1873d-1f9e-4158-8662-cf8c8849a621',
+              "/api/v2/telephony/providers/edges/linebasesettings/c0e1873d-1f9e-4158-8662-cf8c8849a621",
           },
         ],
         properties: {
           phone_label: {
             value: {
-              instance: 'PureCloud WebRTC Phone',
+              instance: "PureCloud WebRTC Phone",
             },
           },
           phone_maxLineKeys: {
@@ -36,7 +37,7 @@ const buildPhoneBaseMock = (phoneBase) => {
           },
           phone_media_codecs: {
             value: {
-              instance: ['audio/opus'],
+              instance: ["audio/opus"],
             },
           },
         },
@@ -44,11 +45,11 @@ const buildPhoneBaseMock = (phoneBase) => {
           provisions: false,
           registers: false,
           dualRegisters: false,
-          hardwareIdType: 'mac',
+          hardwareIdType: "mac",
           allowReboot: false,
           noRebalance: false,
           noCloudProvisioning: false,
-          mediaCodecs: ['audio/opus'],
+          mediaCodecs: ["audio/opus"],
           cdm: true,
         },
         selfUri: `/api/v2/telephony/providers/edges/phonebasesettings/${phoneBase.id}`,
@@ -62,26 +63,29 @@ beforeEach(() => {
   TelephonyProvidersEdgeApi.mockClear();
 });
 
-describe('When retrieving phonebase information: ', () => {
-  test('When a call to getPhoneBaseByName() and the underlying genesys cloud api throws an exception, we should return a null', async () => {
+describe("When retrieving phonebase information: ", () => {
+  test("When a call to getPhoneBaseByName() and the underlying genesys cloud api throws an exception, we should return a null", async () => {
     TelephonyProvidersEdgeApi.mockImplementation(() => {
       return {
         getTelephonyProvidersEdgesPhonebasesettings: (opts) => {
-          throw 'An error was encountered';
+          throw "An error was encountered";
         },
       };
     });
 
-    const results = await phonebaseapi.getPhoneBaseByName('AmyName');
+    const results = await phonebaseapi.getPhoneBaseByName("AmyName");
     expect(TelephonyProvidersEdgeApi).toHaveBeenCalledTimes(1);
   });
 
-  test('When a call to getPhoneBaseByName(), it should a return the specific phone record ', async () => {
-    const targetPhoneBase = { id: uuidv4(), name: 'WebRTC Phone' };
+  test("When a call to getPhoneBaseByName(), it should a return the specific phone record ", async () => {
+    const targetPhoneBase = { id: uuidv4(), name: "WebRTC Phone" };
 
     const mock_call = buildPhoneBaseMock(targetPhoneBase);
 
-    expected_result = { id: targetPhoneBase.id, name: targetPhoneBase.name };
+    const expected_result = {
+      id: targetPhoneBase.id,
+      name: targetPhoneBase.name,
+    };
 
     TelephonyProvidersEdgeApi.mockImplementation(() => {
       return {
@@ -93,12 +97,12 @@ describe('When retrieving phonebase information: ', () => {
       };
     });
 
-    let results = await phonebaseapi.getPhoneBaseByName('WebRTC Phone');
+    let results = await phonebaseapi.getPhoneBaseByName("WebRTC Phone");
     expect(results).toBeDefined();
     expect(results.id).toBe(targetPhoneBase.id);
     expect(results.name).toBe(targetPhoneBase.name);
 
-    results = await phonebaseapi.getPhoneBaseByName('WebRTC Phone');
+    results = await phonebaseapi.getPhoneBaseByName("WebRTC Phone");
     expect(TelephonyProvidersEdgeApi).toHaveBeenCalledTimes(1); //Checking to make sure we read from the cache on the second call.
 
     expect(results).toBeDefined();

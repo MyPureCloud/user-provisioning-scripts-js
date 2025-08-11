@@ -1,5 +1,5 @@
-const platformClient = require('purecloud-platform-client-v2');
-const { retry } = require('@lifeomic/attempt');
+import platformClient from 'purecloud-platform-client-v2';
+import { retry } from '@lifeomic/attempt';
 
 /*
     When you create a web rtc phone you do not automatically associate it with the user.
@@ -62,4 +62,4 @@ async function assignUserToWebRtcPhone(userId) {
   }
 };
 
-exports.assignUserToWebRtcPhone = assignUserToWebRtcPhone;
+export { assignUserToWebRtcPhone };

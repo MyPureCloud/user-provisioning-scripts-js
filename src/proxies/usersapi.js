@@ -1,7 +1,7 @@
-const platformClient = require('purecloud-platform-client-v2');
+import platformClient from "purecloud-platform-client-v2";
 
 async function createUser(userInfo) {
-  apiInstance = new platformClient.UsersApi();
+  const apiInstance = new platformClient.UsersApi();
 
   const user = {
     name: userInfo.NAME,
@@ -12,10 +12,13 @@ async function createUser(userInfo) {
   try {
     return await apiInstance.postUsers(user);
   } catch (e) {
-    console.error(`Error has occurred while trying to create user ${userInfo.name}`, e);
+    console.error(
+      `Error has occurred while trying to create user ${userInfo.name}`,
+      e
+    );
 
     return null;
   }
-};
+}
 
-exports.createUser = createUser;
+export { createUser };

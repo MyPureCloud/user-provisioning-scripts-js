@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "test": "jest --coverage --silent",
     "test-watch": "jest --watchAll --coverage --silent"
@@ -18,11 +19,14 @@
     "csv-parser": "^2.3.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "mdpdf": "^2.1.2",
+    "mdpdf": "^3.1.0",
     "purecloud-platform-client-v2": "^87.0.0",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
-    "jest": "^26.4.2"
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0"
   }
 }

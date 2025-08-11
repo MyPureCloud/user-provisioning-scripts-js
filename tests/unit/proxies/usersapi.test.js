@@ -1,8 +1,9 @@
-const usersapi = require('../../../src/proxies/usersapi');
-const { v4: uuidv4 } = require('uuid');
-const { UsersApi } = require('purecloud-platform-client-v2');
-
 jest.mock('purecloud-platform-client-v2');
+
+import * as usersapi from '../../../src/proxies/usersapi.js';
+import { v4 as uuidv4 } from 'uuid';
+import platformClient from 'purecloud-platform-client-v2';
+const { UsersApi } = platformClient;
 
 beforeEach(() => {
   // Clear all instances and calls to constructor and all methods:
