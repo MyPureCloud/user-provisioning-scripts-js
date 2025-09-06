@@ -26,7 +26,7 @@ All code was run using node version 14.3.0. The code should work with Node 11 an
    - You can also set the above environment variables in .env file.
 
 5. To run the test cases, you can run: `npm run test`
-6. To run the actual code, you can change to the src directory and run: `node user-provisioning.js ../data/userdata.csv`
+6. To run the actual code, you can change to the src directory and run: `node user-provisioning.js ../data/userdata.csv`. Change the environment in authenticateapi.js if using a cloud environment other than mypurecloud.com.
 
    **Notes**:
    - This code creates a user in your actual organization and assigns the user to a group and a role. Be aware that this tutorial code shows how to provision users in your own environment. It has minimal error handling and no rollback logic if something goes wrong.
